@@ -15,8 +15,9 @@ const IDLE_PLAYBACK = {
   status: "idle",
   segmentIndex: 0,
   progress: 0,
+  startedAt: null,
 };
-const PLAYBACK_TICK_MS = 1000 / 60;
+const PLAYBACK_REFRESH_MS = 1000 / 60;
 
 export default function App() {
   const [steps, setSteps] = useState(() => createInitialSteps());
@@ -66,30 +67,35 @@ export default function App() {
         }
 
         const lastSegmentIndex = Math.max(0, steps.length - 2);
-        let nextSegmentIndex = currentPlayback.segmentIndex;
-        let nextProgress =
-          currentPlayback.progress + PLAYBACK_TICK_MS / PLAYBACK_STEP_DURATION_MS;
+        const segmentCount = lastSegmentIndex + 1;
+        const elapsedMs = getNow() - currentPlayback.startedAt;
+        const totalDurationMs = segmentCount * PLAYBACK_STEP_DURATION_MS;
 
-        while (nextProgress >= 1 && nextSegmentIndex < lastSegmentIndex) {
-          nextProgress -= 1;
-          nextSegmentIndex += 1;
-        }
-
-        if (nextProgress >= 1 && nextSegmentIndex >= lastSegmentIndex) {
+        if (elapsedMs >= totalDurationMs) {
           return {
             status: "ended",
             segmentIndex: lastSegmentIndex,
             progress: 1,
+            startedAt: null,
           };
         }
 
+        const nextSegmentIndex = Math.min(
+          lastSegmentIndex,
+          Math.floor(elapsedMs / PLAYBACK_STEP_DURATION_MS),
+        );
+        const nextProgress =
+          (elapsedMs - nextSegmentIndex * PLAYBACK_STEP_DURATION_MS) /
+          PLAYBACK_STEP_DURATION_MS;
+
         return {
+          ...currentPlayback,
           status: "playing",
           segmentIndex: nextSegmentIndex,
           progress: nextProgress,
         };
       });
-    }, PLAYBACK_TICK_MS);
+    }, PLAYBACK_REFRESH_MS);
 
     return () => {
       window.clearInterval(intervalId);
@@ -226,11 +232,17 @@ export default function App() {
     setActiveTool("move");
     setSelectedPathId(null);
     playbackRunIdRef.current += 1;
+    const startedAt = getNow();
     setPlayback((currentPlayback) => {
       if (currentPlayback.status === "paused") {
+        const elapsedMs =
+          (currentPlayback.segmentIndex + currentPlayback.progress) *
+          PLAYBACK_STEP_DURATION_MS;
+
         return {
           ...currentPlayback,
           status: "playing",
+          startedAt: startedAt - elapsedMs,
         };
       }
 
@@ -238,6 +250,7 @@ export default function App() {
         status: "playing",
         segmentIndex: 0,
         progress: 0,
+        startedAt,
       };
     });
   }
@@ -266,6 +279,7 @@ export default function App() {
       status: "playing",
       segmentIndex: 0,
       progress: 0,
+      startedAt: getNow(),
     });
   }
 
@@ -773,4 +787,8 @@ function getPlaybackStatusText(status, canPlay) {
   }
 
   return "准备播放";
+}
+
+function getNow() {
+  return window.performance?.now?.() ?? Date.now();
 }
