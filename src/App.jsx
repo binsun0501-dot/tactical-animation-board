@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { TacticBoard } from "./components/TacticBoard.jsx";
 import {
   cloneBoardState,
@@ -26,6 +26,7 @@ export default function App() {
   const [selectedPathId, setSelectedPathId] = useState(null);
   const [playback, setPlayback] = useState(IDLE_PLAYBACK);
   const [appMode, setAppMode] = useState("edit");
+  const playbackRunIdRef = useRef(0);
 
   const activeStep = steps.find((step) => step.id === activeStepId) ?? steps[0];
   const boardState = createBoardStateFromStep(activeStep);
@@ -53,7 +54,12 @@ export default function App() {
       return undefined;
     }
 
+    const runId = playbackRunIdRef.current;
     const intervalId = window.setInterval(() => {
+      if (playbackRunIdRef.current !== runId) {
+        return;
+      }
+
       setPlayback((currentPlayback) => {
         if (currentPlayback.status !== "playing") {
           return currentPlayback;
@@ -97,6 +103,7 @@ export default function App() {
   }, [playback.status, steps]);
 
   function resetPlayback() {
+    playbackRunIdRef.current += 1;
     setPlayback(IDLE_PLAYBACK);
   }
 
@@ -218,6 +225,7 @@ export default function App() {
 
     setActiveTool("move");
     setSelectedPathId(null);
+    playbackRunIdRef.current += 1;
     setPlayback((currentPlayback) => {
       if (currentPlayback.status === "paused") {
         return {
@@ -235,6 +243,7 @@ export default function App() {
   }
 
   function pausePlayback() {
+    playbackRunIdRef.current += 1;
     setPlayback((currentPlayback) =>
       currentPlayback.status === "playing"
         ? {
@@ -252,6 +261,7 @@ export default function App() {
 
     setActiveTool("move");
     setSelectedPathId(null);
+    playbackRunIdRef.current += 1;
     setPlayback({
       status: "playing",
       segmentIndex: 0,
