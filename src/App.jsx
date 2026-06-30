@@ -1,16 +1,27 @@
-import { useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 import { TacticBoard } from "./components/TacticBoard.jsx";
-import { createInitialBoardState } from "./data/initialBoard.js";
+import {
+  cloneBoardState,
+  createInitialBoardState,
+  createInitialSteps,
+} from "./data/initialBoard.js";
 
 export default function App() {
   const initialBoardState = useMemo(() => createInitialBoardState(), []);
-  const [boardState, setBoardState] = useState(initialBoardState);
+  const [steps, setSteps] = useState(() => createInitialSteps());
+  const [activeStepId, setActiveStepId] = useState("step_0");
   const [fieldView, setFieldView] = useState("half");
   const [activeTool, setActiveTool] = useState("move");
   const [selectedPathId, setSelectedPathId] = useState(null);
+  const activeStep = steps.find((step) => step.id === activeStepId) ?? steps[0];
+  const boardState = {
+    ...activeStep.state,
+    paths: activeStep.paths,
+  };
+  const canAddStep = steps.length < 3;
 
   function restoreDefaultLayout() {
-    setBoardState(createInitialBoardState());
+    updateCurrentStepBoard(() => createInitialBoardState());
   }
 
   function clearBoard() {
@@ -19,16 +30,16 @@ export default function App() {
       return;
     }
 
-    setBoardState({
+    updateCurrentStepBoard(() => ({
       players: [],
       opponents: [],
       ball: null,
       paths: [],
-    });
+    }));
   }
 
   function clearPaths() {
-    setBoardState((current) => ({
+    updateCurrentStepBoard((current) => ({
       ...current,
       paths: [],
     }));
@@ -36,7 +47,7 @@ export default function App() {
   }
 
   function undoLatestPath() {
-    setBoardState((current) => ({
+    updateCurrentStepBoard((current) => ({
       ...current,
       paths: current.paths.slice(0, -1),
     }));
@@ -48,11 +59,78 @@ export default function App() {
       return;
     }
 
-    setBoardState((current) => ({
+    updateCurrentStepBoard((current) => ({
       ...current,
       paths: current.paths.filter((path) => path.id !== selectedPathId),
     }));
     setSelectedPathId(null);
+  }
+
+  function updateCurrentStepBoard(updater) {
+    setSteps((currentSteps) =>
+      currentSteps.map((step) => {
+        if (step.id !== activeStepId) {
+          return step;
+        }
+
+        const currentBoard = {
+          ...step.state,
+          paths: step.paths,
+        };
+        const nextBoard =
+          typeof updater === "function" ? updater(currentBoard) : updater;
+
+        return {
+          ...step,
+          state: {
+            players: nextBoard.players,
+            opponents: nextBoard.opponents,
+            ball: nextBoard.ball,
+          },
+          paths: nextBoard.paths ?? step.paths,
+        };
+      }),
+    );
+  }
+
+  function selectStep(stepId) {
+    setActiveStepId(stepId);
+    setSelectedPathId(null);
+    setActiveTool("move");
+  }
+
+  function addNextStep() {
+    if (!canAddStep) {
+      return;
+    }
+
+    setSteps((currentSteps) => {
+      const previousStep = currentSteps[currentSteps.length - 1];
+      const order = currentSteps.length;
+      const nextStepId = `step_${order}`;
+      const nextStep = {
+        id: nextStepId,
+        order,
+        title: `Step ${order}`,
+        note: order === 1 ? "继续拖动棋子或画箭头。" : "继承上一步，继续推进。",
+        baseStateFromStepId: previousStep.id,
+        state: cloneBoardState(previousStep.state),
+        paths: [],
+      };
+
+      setActiveStepId(nextStepId);
+      setSelectedPathId(null);
+      setActiveTool("move");
+      return [...currentSteps, nextStep];
+    });
+  }
+
+  function updateStepNote(note) {
+    setSteps((currentSteps) =>
+      currentSteps.map((step) =>
+        step.id === activeStepId ? { ...step, note } : step,
+      ),
+    );
   }
 
   return (
@@ -134,6 +212,45 @@ export default function App() {
             <button className="tool-button danger" type="button" onClick={clearBoard}>
               清空画面
             </button>
+
+            <div className="step-panel" aria-label="分步状态">
+              <div className="step-panel-header">
+                <span>步骤</span>
+                <button
+                  className="small-button"
+                  type="button"
+                  onClick={addNextStep}
+                  disabled={!canAddStep}
+                >
+                  新增下一步
+                </button>
+              </div>
+
+              <div className="step-list">
+                {steps.map((step) => (
+                  <button
+                    key={step.id}
+                    className={
+                      step.id === activeStepId ? "step-button active" : "step-button"
+                    }
+                    type="button"
+                    onClick={() => selectStep(step.id)}
+                  >
+                    <strong>{step.title}</strong>
+                    <span>{step.baseStateFromStepId ? "继承上一状态" : "初始站位"}</span>
+                  </button>
+                ))}
+              </div>
+
+              <label className="step-note">
+                <span>本步说明</span>
+                <textarea
+                  value={activeStep.note}
+                  onChange={(event) => updateStepNote(event.target.value)}
+                  rows="3"
+                />
+              </label>
+            </div>
           </aside>
 
           <section className="board-area">
@@ -143,7 +260,7 @@ export default function App() {
               fieldView={fieldView}
               selectedPathId={selectedPathId}
               setSelectedPathId={setSelectedPathId}
-              setBoardState={setBoardState}
+              setBoardState={updateCurrentStepBoard}
             />
           </section>
         </div>

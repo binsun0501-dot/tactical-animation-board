@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import React, { useRef, useState } from "react";
 
 const BOARD_WIDTH = 100;
 const BOARD_HEIGHT = 64;
@@ -247,7 +247,7 @@ function FieldMarkings({ fieldView }) {
       ) : (
         <>
           <path d="M 98 22 L 98 42" />
-          <text className="field-note" x="84" y="7">
+          <text className="field-note" x="96" y="7" textAnchor="end">
             半场快速讲解
           </text>
         </>

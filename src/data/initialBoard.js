@@ -24,6 +24,35 @@ export function createInitialBoardState() {
   };
 }
 
+export function createInitialSteps() {
+  const initialBoard = createInitialBoardState();
+
+  return [
+    {
+      id: "step_0",
+      order: 0,
+      title: "Step 0",
+      note: "初始站位。",
+      baseStateFromStepId: null,
+      state: cloneBoardState(initialBoard),
+      paths: [],
+    },
+  ];
+}
+
+export function cloneBoardState(boardState) {
+  return {
+    players: clonePieces(boardState.players),
+    opponents: clonePieces(boardState.opponents),
+    ball: boardState.ball
+      ? {
+          ...boardState.ball,
+          position: { ...boardState.ball.position },
+        }
+      : null,
+  };
+}
+
 function player(id, number, x, y) {
   return {
     id,
@@ -31,6 +60,13 @@ function player(id, number, x, y) {
     number,
     position: { x, y },
   };
+}
+
+function clonePieces(pieces) {
+  return pieces.map((piece) => ({
+    ...piece,
+    position: { ...piece.position },
+  }));
 }
 
 function opponent(id, number, x, y) {
