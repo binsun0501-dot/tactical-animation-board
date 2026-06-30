@@ -481,6 +481,7 @@ export default function App() {
         onReturnToEdit={returnToEditMode}
         playbackStatus={playback.status}
         steps={steps}
+        tacticTitle={tacticMeta.title}
       />
     );
   }
@@ -503,6 +504,7 @@ export default function App() {
         onReturnToEdit={returnToEditMode}
         playbackStatus={playback.status}
         steps={steps}
+        tacticTitle={tacticMeta.title}
       />
     );
   }
@@ -768,6 +770,7 @@ function PresentationMode({
   onReturnToEdit,
   playbackStatus,
   steps,
+  tacticTitle,
 }) {
   return (
     <main className="app-shell presentation-app">
@@ -778,7 +781,7 @@ function PresentationMode({
           </button>
           <div>
             <p className="stage-label">现场展示</p>
-            <h1>战术动画板</h1>
+            <h1>{tacticTitle}</h1>
           </div>
           <StepProgress steps={steps} currentStepId={displayedStep?.id} />
         </header>
@@ -827,6 +830,7 @@ function ViewerMode({
   onReturnToEdit,
   playbackStatus,
   steps,
+  tacticTitle,
 }) {
   const isFirstStep = currentStepIndex <= 0;
   const isLastStep = currentStepIndex >= steps.length - 1;
@@ -840,7 +844,7 @@ function ViewerMode({
           </button>
           <div>
             <p className="stage-label">队员观看</p>
-            <h1>战术动画板</h1>
+            <h1>{tacticTitle}</h1>
           </div>
           <strong className="viewer-step-count">
             Step {currentStepIndex} / {Math.max(steps.length - 1, 0)}

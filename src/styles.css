@@ -416,6 +416,11 @@ h1 {
   gap: 16px;
 }
 
+.presentation-header h1,
+.viewer-header h1 {
+  overflow-wrap: anywhere;
+}
+
 .presentation-board {
   min-width: 0;
   min-height: 0;
