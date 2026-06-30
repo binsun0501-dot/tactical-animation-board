@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { TacticBoard } from "./components/TacticBoard.jsx";
 import {
   cloneBoardState,
@@ -16,6 +16,7 @@ const IDLE_PLAYBACK = {
   segmentIndex: 0,
   progress: 0,
 };
+const PLAYBACK_TICK_MS = 1000 / 60;
 
 export default function App() {
   const [steps, setSteps] = useState(() => createInitialSteps());
@@ -25,7 +26,6 @@ export default function App() {
   const [selectedPathId, setSelectedPathId] = useState(null);
   const [playback, setPlayback] = useState(IDLE_PLAYBACK);
   const [appMode, setAppMode] = useState("edit");
-  const lastFrameTimeRef = useRef(null);
 
   const activeStep = steps.find((step) => step.id === activeStepId) ?? steps[0];
   const boardState = createBoardStateFromStep(activeStep);
@@ -50,20 +50,10 @@ export default function App() {
 
   useEffect(() => {
     if (playback.status !== "playing") {
-      lastFrameTimeRef.current = null;
       return undefined;
     }
 
-    let frameId = 0;
-
-    function tick(timestamp) {
-      if (lastFrameTimeRef.current === null) {
-        lastFrameTimeRef.current = timestamp;
-      }
-
-      const deltaTime = timestamp - lastFrameTimeRef.current;
-      lastFrameTimeRef.current = timestamp;
-
+    const intervalId = window.setInterval(() => {
       setPlayback((currentPlayback) => {
         if (currentPlayback.status !== "playing") {
           return currentPlayback;
@@ -72,7 +62,7 @@ export default function App() {
         const lastSegmentIndex = Math.max(0, steps.length - 2);
         let nextSegmentIndex = currentPlayback.segmentIndex;
         let nextProgress =
-          currentPlayback.progress + deltaTime / PLAYBACK_STEP_DURATION_MS;
+          currentPlayback.progress + PLAYBACK_TICK_MS / PLAYBACK_STEP_DURATION_MS;
 
         while (nextProgress >= 1 && nextSegmentIndex < lastSegmentIndex) {
           nextProgress -= 1;
@@ -93,14 +83,10 @@ export default function App() {
           progress: nextProgress,
         };
       });
-
-      frameId = window.requestAnimationFrame(tick);
-    }
-
-    frameId = window.requestAnimationFrame(tick);
+    }, PLAYBACK_TICK_MS);
 
     return () => {
-      window.cancelAnimationFrame(frameId);
+      window.clearInterval(intervalId);
     };
   }, [playback.status, steps.length]);
 
@@ -111,7 +97,6 @@ export default function App() {
   }, [playback.status, steps]);
 
   function resetPlayback() {
-    lastFrameTimeRef.current = null;
     setPlayback(IDLE_PLAYBACK);
   }
 
@@ -233,7 +218,6 @@ export default function App() {
 
     setActiveTool("move");
     setSelectedPathId(null);
-    lastFrameTimeRef.current = null;
     setPlayback((currentPlayback) => {
       if (currentPlayback.status === "paused") {
         return {
@@ -251,7 +235,6 @@ export default function App() {
   }
 
   function pausePlayback() {
-    lastFrameTimeRef.current = null;
     setPlayback((currentPlayback) =>
       currentPlayback.status === "playing"
         ? {
@@ -269,7 +252,6 @@ export default function App() {
 
     setActiveTool("move");
     setSelectedPathId(null);
-    lastFrameTimeRef.current = null;
     setPlayback({
       status: "playing",
       segmentIndex: 0,
