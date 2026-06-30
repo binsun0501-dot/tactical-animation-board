@@ -1,0 +1,189 @@
+import { useRef, useState } from "react";
+
+const BOARD_WIDTH = 100;
+const BOARD_HEIGHT = 64;
+const PIECE_RADIUS = 3.1;
+const BALL_RADIUS = 2.1;
+
+export function TacticBoard({ boardState, fieldView, setBoardState }) {
+  const svgRef = useRef(null);
+  const [dragTarget, setDragTarget] = useState(null);
+
+  function pointFromEvent(event) {
+    const rect = svgRef.current.getBoundingClientRect();
+    const x = ((event.clientX - rect.left) / rect.width) * BOARD_WIDTH;
+    const y = ((event.clientY - rect.top) / rect.height) * BOARD_HEIGHT;
+
+    return {
+      x: clamp(x, 2, BOARD_WIDTH - 2),
+      y: clamp(y, 2, BOARD_HEIGHT - 2),
+    };
+  }
+
+  function startDrag(event, target) {
+    event.preventDefault();
+    event.currentTarget.setPointerCapture(event.pointerId);
+    setDragTarget({ ...target, pointerId: event.pointerId });
+  }
+
+  function moveDrag(event) {
+    if (!dragTarget) {
+      return;
+    }
+
+    const position = pointFromEvent(event);
+    setBoardState((current) => moveBoardItem(current, dragTarget, position));
+  }
+
+  function endDrag(event) {
+    if (dragTarget?.pointerId === event.pointerId) {
+      setDragTarget(null);
+    }
+  }
+
+  return (
+    <div className="board-frame" data-field-view={fieldView}>
+      <svg
+        ref={svgRef}
+        className="tactic-board"
+        viewBox={`0 0 ${BOARD_WIDTH} ${BOARD_HEIGHT}`}
+        role="img"
+        aria-label="2D 足球战术白板"
+        onPointerMove={moveDrag}
+        onPointerUp={endDrag}
+        onPointerCancel={endDrag}
+      >
+        <FieldMarkings fieldView={fieldView} />
+
+        {boardState.players.map((piece) => (
+          <PlayerPiece
+            key={piece.id}
+            piece={piece}
+            kind="home"
+            onPointerDown={(event) =>
+              startDrag(event, { type: "player", id: piece.id })
+            }
+          />
+        ))}
+
+        {boardState.opponents.map((piece) => (
+          <PlayerPiece
+            key={piece.id}
+            piece={piece}
+            kind="away"
+            onPointerDown={(event) =>
+              startDrag(event, { type: "opponent", id: piece.id })
+            }
+          />
+        ))}
+
+        {boardState.ball ? (
+          <BallPiece
+            ball={boardState.ball}
+            onPointerDown={(event) =>
+              startDrag(event, { type: "ball", id: boardState.ball.id })
+            }
+          />
+        ) : null}
+      </svg>
+    </div>
+  );
+}
+
+function FieldMarkings({ fieldView }) {
+  return (
+    <g className="field-lines">
+      <rect x="1" y="1" width="98" height="62" rx="1.6" />
+      <line x1="50" y1="1" x2="50" y2="63" />
+      <circle cx="50" cy="32" r="9.5" />
+      <circle cx="50" cy="32" r="0.8" />
+
+      <rect x="1" y="17" width="17" height="30" />
+      <rect x="1" y="24" width="7.8" height="16" />
+      <circle cx="12.2" cy="32" r="0.7" />
+
+      {fieldView === "full" ? (
+        <>
+          <rect x="82" y="17" width="17" height="30" />
+          <rect x="91.2" y="24" width="7.8" height="16" />
+          <circle cx="87.8" cy="32" r="0.7" />
+        </>
+      ) : (
+        <>
+          <path d="M 98 22 L 98 42" />
+          <text className="field-note" x="84" y="7">
+            半场快速讲解
+          </text>
+        </>
+      )}
+    </g>
+  );
+}
+
+function PlayerPiece({ piece, kind, onPointerDown }) {
+  return (
+    <g
+      className={`player-piece ${kind}`}
+      transform={`translate(${piece.position.x} ${piece.position.y})`}
+      onPointerDown={onPointerDown}
+      tabIndex="0"
+      role="button"
+      aria-label={`${kind === "home" ? "本方" : "对方"}${piece.number}号`}
+    >
+      <circle r={PIECE_RADIUS} />
+      <text y="1.2">{piece.number}</text>
+    </g>
+  );
+}
+
+function BallPiece({ ball, onPointerDown }) {
+  return (
+    <g
+      className="ball-piece"
+      transform={`translate(${ball.position.x} ${ball.position.y})`}
+      onPointerDown={onPointerDown}
+      tabIndex="0"
+      role="button"
+      aria-label="足球"
+    >
+      <circle r={BALL_RADIUS} />
+      <path d="M -1.1 -0.4 L 0 -1.25 L 1.1 -0.4 L 0.7 0.95 L -0.7 0.95 Z" />
+    </g>
+  );
+}
+
+function moveBoardItem(current, target, position) {
+  if (target.type === "player") {
+    return {
+      ...current,
+      players: current.players.map((piece) =>
+        piece.id === target.id ? { ...piece, position } : piece,
+      ),
+    };
+  }
+
+  if (target.type === "opponent") {
+    return {
+      ...current,
+      opponents: current.opponents.map((piece) =>
+        piece.id === target.id ? { ...piece, position } : piece,
+      ),
+    };
+  }
+
+  if (target.type === "ball" && current.ball) {
+    return {
+      ...current,
+      ball: {
+        ...current.ball,
+        position,
+      },
+    };
+  }
+
+  return current;
+}
+
+function clamp(value, min, max) {
+  return Math.min(Math.max(value, min), max);
+}
