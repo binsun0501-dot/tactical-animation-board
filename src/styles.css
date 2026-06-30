@@ -487,6 +487,10 @@ h1 {
   gap: 10px;
 }
 
+.viewer-header > div {
+  min-width: 0;
+}
+
 .viewer-header h1 {
   font-size: 20px;
 }
@@ -755,6 +759,20 @@ h1 {
     height: 100vh;
     min-height: 0;
     padding: 10px;
+  }
+
+  .viewer-header {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .viewer-header h1 {
+    font-size: 19px;
+    line-height: 1.2;
+  }
+
+  .viewer-step-count {
+    grid-column: 2;
+    justify-self: start;
   }
 
   .viewer-board .board-frame {
