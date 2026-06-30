@@ -111,6 +111,7 @@ export default function App() {
   }, [playback.status, steps]);
 
   function resetPlayback() {
+    lastFrameTimeRef.current = null;
     setPlayback(IDLE_PLAYBACK);
   }
 
@@ -232,6 +233,7 @@ export default function App() {
 
     setActiveTool("move");
     setSelectedPathId(null);
+    lastFrameTimeRef.current = null;
     setPlayback((currentPlayback) => {
       if (currentPlayback.status === "paused") {
         return {
@@ -249,6 +251,7 @@ export default function App() {
   }
 
   function pausePlayback() {
+    lastFrameTimeRef.current = null;
     setPlayback((currentPlayback) =>
       currentPlayback.status === "playing"
         ? {
@@ -266,6 +269,7 @@ export default function App() {
 
     setActiveTool("move");
     setSelectedPathId(null);
+    lastFrameTimeRef.current = null;
     setPlayback({
       status: "playing",
       segmentIndex: 0,
