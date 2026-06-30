@@ -195,21 +195,22 @@ function cloneBoardState(state = {}) {
 }
 
 function clonePiece(piece) {
+  const position = clonePosition(piece.position ?? piece);
+
   return {
+    ...piece,
     id: String(piece.id),
-    label: String(piece.label ?? ""),
-    team: piece.team === "away" ? "away" : "home",
-    x: clampPercent(piece.x),
-    y: clampPercent(piece.y),
+    number: String(piece.number ?? piece.label ?? ""),
+    teamId: piece.teamId ?? (piece.team === "away" ? "team_away" : "team_home"),
+    position,
   };
 }
 
 function cloneBall(ball) {
   return {
+    ...ball,
     id: String(ball?.id || "ball"),
-    label: String(ball?.label || "球"),
-    x: clampPercent(ball?.x ?? 50),
-    y: clampPercent(ball?.y ?? 50),
+    position: clonePosition(ball?.position ?? ball),
   };
 }
 
@@ -230,6 +231,13 @@ function clonePoint(point) {
   };
 }
 
+function clonePosition(position) {
+  return {
+    x: clampPercent(position?.x ?? 50),
+    y: clampPercent(position?.y ?? 50),
+  };
+}
+
 function normalizeBoardStateForApp(state = {}, tactic = {}) {
   return {
     players: normalizePiecesForApp(state.players ?? tactic.players, "home"),
@@ -247,7 +255,7 @@ function normalizePiecesForApp(pieces, fallbackTeam) {
     clonePiece({
       ...piece,
       id: piece.id || `${fallbackTeam}_${index + 1}`,
-      label: piece.label || String(index + 1),
+      number: piece.number || piece.label || String(index + 1),
       team: piece.team || fallbackTeam,
     }),
   );
