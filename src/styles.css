@@ -419,6 +419,7 @@ h1 {
 .presentation-header h1,
 .viewer-header h1 {
   overflow-wrap: anywhere;
+  max-width: 100%;
 }
 
 .presentation-board {
@@ -768,6 +769,7 @@ h1 {
   .viewer-header h1 {
     font-size: 19px;
     line-height: 1.2;
+    word-break: break-all;
   }
 
   .viewer-step-count {
