@@ -397,6 +397,83 @@ h1 {
   box-shadow: 0 0 0 3px rgba(23, 109, 242, 0.14);
 }
 
+.viewer-app {
+  padding: 0;
+  background: #f2f8f4;
+}
+
+.viewer-shell {
+  width: min(520px, 100%);
+  min-height: 100vh;
+  margin: 0 auto;
+  padding: 12px;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  gap: 10px;
+}
+
+.viewer-header {
+  min-height: 68px;
+  padding: 10px 12px;
+  border: 1px solid rgba(26, 66, 44, 0.12);
+  border-radius: 8px;
+  background: rgba(250, 255, 252, 0.95);
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+}
+
+.viewer-header h1 {
+  font-size: 20px;
+}
+
+.viewer-step-count {
+  color: #176df2;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.viewer-board {
+  min-width: 0;
+  min-height: 0;
+}
+
+.viewer-board .board-frame {
+  min-height: 0;
+  height: 100%;
+  padding: 8px;
+}
+
+.viewer-note-panel {
+  padding: 12px;
+  border: 1px solid rgba(26, 66, 44, 0.12);
+  border-radius: 8px;
+  background: rgba(250, 255, 252, 0.96);
+  display: grid;
+  gap: 12px;
+}
+
+.viewer-note-panel p {
+  min-height: 44px;
+  margin: 0;
+  color: #233b2f;
+  font-size: 16px;
+  font-weight: 800;
+  line-height: 1.45;
+}
+
+.viewer-controls {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.viewer-controls .control-button {
+  min-width: 0;
+  padding: 0 8px;
+}
+
 .board-frame {
   width: 100%;
   min-height: 540px;
@@ -602,5 +679,23 @@ h1 {
 
   .presentation-board .board-frame {
     height: 62vh;
+  }
+
+  .viewer-shell {
+    width: 100%;
+    min-height: 100vh;
+    padding: 10px;
+  }
+
+  .viewer-board .board-frame {
+    height: 58vh;
+  }
+
+  .viewer-controls {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .viewer-controls .control-button.primary {
+    grid-column: span 2;
   }
 }

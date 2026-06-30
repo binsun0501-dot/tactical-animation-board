@@ -46,6 +46,7 @@ export default function App() {
   const canPlay = steps.length > 1;
   const editingDisabled = isPlaybackVisible;
   const isPresentationMode = appMode === "presentation";
+  const isViewerMode = appMode === "viewer";
 
   useEffect(() => {
     if (playback.status !== "playing") {
@@ -294,6 +295,25 @@ export default function App() {
     setAppMode("edit");
   }
 
+  function enterViewerMode() {
+    resetPlayback();
+    setSelectedPathId(null);
+    setActiveTool("move");
+    setAppMode("viewer");
+  }
+
+  function goToStepByIndex(nextStepIndex) {
+    const nextStep = steps[nextStepIndex];
+    if (!nextStep) {
+      return;
+    }
+
+    resetPlayback();
+    setActiveStepId(nextStep.id);
+    setSelectedPathId(null);
+    setActiveTool("move");
+  }
+
   if (isPresentationMode) {
     return (
       <PresentationMode
@@ -304,6 +324,28 @@ export default function App() {
         fieldView={fieldView}
         onPause={pausePlayback}
         onPlay={playSteps}
+        onReplay={replaySteps}
+        onReturnToEdit={returnToEditMode}
+        playbackStatus={playback.status}
+        steps={steps}
+      />
+    );
+  }
+
+  if (isViewerMode) {
+    return (
+      <ViewerMode
+        canPlay={canPlay}
+        currentStepIndex={displayedStepIndex}
+        displayedBoardState={displayedBoardState}
+        displayedStep={displayedStep}
+        fieldView={fieldView}
+        onNextStep={() =>
+          goToStepByIndex(Math.min(steps.length - 1, displayedStepIndex + 1))
+        }
+        onPause={pausePlayback}
+        onPlay={playSteps}
+        onPreviousStep={() => goToStepByIndex(Math.max(0, displayedStepIndex - 1))}
         onReplay={replaySteps}
         onReturnToEdit={returnToEditMode}
         playbackStatus={playback.status}
@@ -337,6 +379,9 @@ export default function App() {
             </button>
             <button className="toggle action" type="button" onClick={enterPresentationMode}>
               展示模式
+            </button>
+            <button className="toggle action" type="button" onClick={enterViewerMode}>
+              观看页
             </button>
           </div>
         </header>
@@ -598,6 +643,102 @@ function PresentationMode({
           status={playbackStatus}
           totalSteps={steps.length}
         />
+      </section>
+    </main>
+  );
+}
+
+function ViewerMode({
+  canPlay,
+  currentStepIndex,
+  displayedBoardState,
+  displayedStep,
+  fieldView,
+  onNextStep,
+  onPause,
+  onPlay,
+  onPreviousStep,
+  onReplay,
+  onReturnToEdit,
+  playbackStatus,
+  steps,
+}) {
+  const isFirstStep = currentStepIndex <= 0;
+  const isLastStep = currentStepIndex >= steps.length - 1;
+
+  return (
+    <main className="app-shell viewer-app">
+      <section className="viewer-shell" aria-label="队员观看页">
+        <header className="viewer-header">
+          <button className="control-button" type="button" onClick={onReturnToEdit}>
+            关闭
+          </button>
+          <div>
+            <p className="stage-label">队员观看</p>
+            <h1>战术动画板</h1>
+          </div>
+          <strong className="viewer-step-count">
+            Step {currentStepIndex} / {Math.max(steps.length - 1, 0)}
+          </strong>
+        </header>
+
+        <section className="viewer-board">
+          <TacticBoard
+            activeTool="move"
+            boardState={displayedBoardState}
+            fieldView={fieldView}
+            readOnly
+            selectedPathId={null}
+            setSelectedPathId={() => {}}
+            setBoardState={() => {}}
+          />
+        </section>
+
+        <section className="viewer-note-panel" aria-label="当前步骤说明">
+          <p>{displayedStep?.note}</p>
+          <div className="viewer-controls" aria-label="观看页播放控制">
+            <button
+              className="control-button"
+              type="button"
+              onClick={onPreviousStep}
+              disabled={isFirstStep || playbackStatus === "playing"}
+            >
+              上一步
+            </button>
+            <button
+              className="control-button primary"
+              type="button"
+              onClick={onPlay}
+              disabled={!canPlay || playbackStatus === "playing"}
+            >
+              {playbackStatus === "paused" ? "继续" : "播放"}
+            </button>
+            <button
+              className="control-button"
+              type="button"
+              onClick={onPause}
+              disabled={playbackStatus !== "playing"}
+            >
+              暂停
+            </button>
+            <button
+              className="control-button"
+              type="button"
+              onClick={onReplay}
+              disabled={!canPlay}
+            >
+              重播
+            </button>
+            <button
+              className="control-button"
+              type="button"
+              onClick={onNextStep}
+              disabled={isLastStep || playbackStatus === "playing"}
+            >
+              下一步
+            </button>
+          </div>
+        </section>
       </section>
     </main>
   );
