@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import { SavePanel } from "./components/SavePanel.jsx";
 import { TacticBoard } from "./components/TacticBoard.jsx";
 import {
   cloneBoardState,
@@ -10,6 +11,14 @@ import {
   createBoardStateFromStep,
   resolvePlaybackFrame,
 } from "./utils/playback.js";
+import {
+  createNewTacticMeta,
+  createTacticDocument,
+  documentToAppState,
+  getSavedTacticSummary,
+  loadSavedTacticDocument,
+  saveTacticDocument,
+} from "./utils/tacticPersistence.js";
 
 const IDLE_PLAYBACK = {
   status: "idle",
@@ -19,10 +28,45 @@ const IDLE_PLAYBACK = {
 };
 const PLAYBACK_REFRESH_MS = 1000 / 60;
 
+function createInitialAppState() {
+  const defaultSteps = createInitialSteps();
+  const defaultMeta = createNewTacticMeta();
+
+  try {
+    const savedDocument = loadSavedTacticDocument();
+    if (savedDocument) {
+      return {
+        ...documentToAppState(savedDocument),
+        loadMessage: "已打开最近保存的战术",
+      };
+    }
+  } catch {
+    return {
+      steps: defaultSteps,
+      activeStepId: "step_0",
+      fieldView: "half",
+      tacticMeta: defaultMeta,
+      loadMessage: "最近保存无法打开，已使用默认战术板",
+    };
+  }
+
+  return {
+    steps: defaultSteps,
+    activeStepId: "step_0",
+    fieldView: "half",
+    tacticMeta: defaultMeta,
+    loadMessage: "",
+  };
+}
+
 export default function App() {
-  const [steps, setSteps] = useState(() => createInitialSteps());
-  const [activeStepId, setActiveStepId] = useState("step_0");
-  const [fieldView, setFieldView] = useState("half");
+  const [initialAppState] = useState(() => createInitialAppState());
+  const [steps, setSteps] = useState(() => initialAppState.steps);
+  const [activeStepId, setActiveStepId] = useState(initialAppState.activeStepId);
+  const [fieldView, setFieldView] = useState(initialAppState.fieldView);
+  const [tacticMeta, setTacticMeta] = useState(() => initialAppState.tacticMeta);
+  const [saveStatus, setSaveStatus] = useState(initialAppState.loadMessage);
+  const [savedSummary, setSavedSummary] = useState(() => getSavedTacticSummary());
   const [activeTool, setActiveTool] = useState("move");
   const [selectedPathId, setSelectedPathId] = useState(null);
   const [playback, setPlayback] = useState(IDLE_PLAYBACK);
@@ -222,6 +266,61 @@ export default function App() {
         step.id === activeStepId ? { ...step, note } : step,
       ),
     );
+  }
+
+  function applyTacticState(appState, message) {
+    resetPlayback();
+    setSteps(appState.steps);
+    setActiveStepId(appState.activeStepId);
+    setFieldView(appState.fieldView);
+    setTacticMeta(appState.tacticMeta);
+    setActiveTool("move");
+    setSelectedPathId(null);
+    setSaveStatus(message);
+  }
+
+  function updateTacticTitle(title) {
+    setTacticMeta((currentMeta) => ({
+      ...currentMeta,
+      title,
+    }));
+  }
+
+  function saveCurrentTactic() {
+    try {
+      const updatedMeta = {
+        ...tacticMeta,
+        updatedAt: new Date().toISOString(),
+      };
+      const document = createTacticDocument({
+        steps,
+        activeStepId,
+        fieldView,
+        tacticMeta: updatedMeta,
+      });
+      saveTacticDocument(document);
+      const appState = documentToAppState(document);
+      setTacticMeta(appState.tacticMeta);
+      setSavedSummary(getSavedTacticSummary());
+      setSaveStatus("已保存到本机");
+    } catch (error) {
+      setSaveStatus(error.message || "保存失败，请重试");
+    }
+  }
+
+  function loadRecentTactic() {
+    try {
+      const document = loadSavedTacticDocument();
+      if (!document) {
+        setSaveStatus("本机还没有保存的战术");
+        return;
+      }
+
+      applyTacticState(documentToAppState(document), "已打开最近保存的战术");
+      setSavedSummary(getSavedTacticSummary());
+    } catch (error) {
+      setSaveStatus(error.message || "打开失败，请检查保存数据");
+    }
   }
 
   function playSteps() {
@@ -462,6 +561,16 @@ export default function App() {
             >
               清空画面
             </button>
+
+            <SavePanel
+              tacticTitle={tacticMeta.title}
+              onTitleChange={updateTacticTitle}
+              onSave={saveCurrentTactic}
+              onLoadSaved={loadRecentTactic}
+              savedSummary={savedSummary}
+              status={saveStatus}
+              disabled={editingDisabled}
+            />
 
             <div className="step-panel" aria-label="分步状态">
               <div className="step-panel-header">

@@ -175,6 +175,53 @@ h1 {
   opacity: 0.42;
 }
 
+.save-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px;
+  border: 1px solid rgba(23, 109, 242, 0.18);
+  border-radius: 8px;
+  background: rgba(244, 248, 255, 0.76);
+}
+
+.tactic-title-field {
+  display: grid;
+  gap: 5px;
+  color: #244535;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.tactic-title-field input {
+  min-width: 0;
+  border: 1px solid rgba(28, 72, 49, 0.15);
+  border-radius: 8px;
+  padding: 8px 9px;
+  background: #ffffff;
+  color: #273a31;
+  font: inherit;
+}
+
+.save-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+
+.saved-summary,
+.save-status {
+  margin: 0;
+  color: #587065;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.save-status {
+  color: #176df2;
+  font-weight: 900;
+}
+
 .step-list {
   display: grid;
   gap: 8px;
@@ -662,6 +709,10 @@ h1 {
   .step-panel {
     grid-column: 1 / -1;
     margin-top: 0;
+  }
+
+  .save-panel {
+    grid-column: 1 / -1;
   }
 
   .board-frame {
