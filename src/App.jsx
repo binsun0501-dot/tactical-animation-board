@@ -12,6 +12,7 @@ import {
   resolvePlaybackFrame,
 } from "./utils/playback.js";
 import { downloadTextFile } from "./utils/downloadFile.js";
+import { exportCurrentStepImagePng } from "./utils/stepImageExport.js";
 import {
   createNewTacticMeta,
   createTacticDocument,
@@ -367,6 +368,22 @@ export default function App() {
     }
   }
 
+  async function exportCurrentStepImage() {
+    try {
+      const result = await exportCurrentStepImagePng({
+        boardState,
+        fieldView,
+        tacticTitle: tacticMeta.title,
+        stepTitle: activeStep.title,
+        stepNote: activeStep.note,
+      });
+      window.__tacticalBoardLastStepImageDataUrl = result.dataUrl;
+      setSaveStatus("已导出当前步骤图片");
+    } catch (error) {
+      setSaveStatus(error.message || "图片导出失败，请重试");
+    }
+  }
+
   function playSteps() {
     if (!canPlay) {
       return;
@@ -615,6 +632,7 @@ export default function App() {
               onLoadSaved={loadRecentTactic}
               onExportJson={exportTacticJson}
               onImportJson={importTacticJson}
+              onExportStepImage={exportCurrentStepImage}
               savedSummary={savedSummary}
               status={saveStatus}
               disabled={editingDisabled}

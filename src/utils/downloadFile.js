@@ -1,5 +1,9 @@
 export function downloadTextFile({ content, fileName, type }) {
   const blob = new Blob([content], { type });
+  downloadBlobFile({ blob, fileName });
+}
+
+export function downloadBlobFile({ blob, fileName }) {
   const url = window.URL.createObjectURL(blob);
   const link = window.document.createElement("a");
 

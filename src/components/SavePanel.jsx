@@ -7,6 +7,7 @@ export function SavePanel({
   onLoadSaved,
   onExportJson,
   onImportJson,
+  onExportStepImage,
   savedSummary,
   status,
   disabled,
@@ -75,6 +76,16 @@ export function SavePanel({
           打开文件
         </button>
       </div>
+
+      <button
+        className="small-button"
+        type="button"
+        data-testid="export-step-image"
+        onClick={onExportStepImage}
+        disabled={disabled}
+      >
+        导出当前步骤图片
+      </button>
 
       <input
         ref={fileInputRef}
