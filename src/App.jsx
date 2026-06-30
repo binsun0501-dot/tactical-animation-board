@@ -11,12 +11,14 @@ import {
   createBoardStateFromStep,
   resolvePlaybackFrame,
 } from "./utils/playback.js";
+import { downloadTextFile } from "./utils/downloadFile.js";
 import {
   createNewTacticMeta,
   createTacticDocument,
   documentToAppState,
   getSavedTacticSummary,
   loadSavedTacticDocument,
+  sanitizeTitleForFilename,
   saveTacticDocument,
 } from "./utils/tacticPersistence.js";
 
@@ -308,6 +310,18 @@ export default function App() {
     }
   }
 
+  function createCurrentTacticDocument(metaOverrides = {}) {
+    return createTacticDocument({
+      steps,
+      activeStepId,
+      fieldView,
+      tacticMeta: {
+        ...tacticMeta,
+        ...metaOverrides,
+      },
+    });
+  }
+
   function loadRecentTactic() {
     try {
       const document = loadSavedTacticDocument();
@@ -320,6 +334,36 @@ export default function App() {
       setSavedSummary(getSavedTacticSummary());
     } catch (error) {
       setSaveStatus(error.message || "打开失败，请检查保存数据");
+    }
+  }
+
+  function exportTacticJson() {
+    try {
+      const document = createCurrentTacticDocument({
+        updatedAt: new Date().toISOString(),
+      });
+      const content = JSON.stringify(document, null, 2);
+      const fileName = `${sanitizeTitleForFilename(document.tactic.title)}.json`;
+      downloadTextFile({
+        content,
+        fileName,
+        type: "application/json;charset=utf-8",
+      });
+      window.__tacticalBoardLastJsonExport = content;
+      setSaveStatus("已导出战术文件");
+    } catch (error) {
+      setSaveStatus(error.message || "导出失败，请重试");
+    }
+  }
+
+  async function importTacticJson(file) {
+    try {
+      const content = await file.text();
+      const appState = documentToAppState(content);
+      applyTacticState(appState, "已打开战术文件");
+      setSavedSummary(getSavedTacticSummary());
+    } catch (error) {
+      setSaveStatus(error.message || "打开失败，请检查战术文件");
     }
   }
 
@@ -567,6 +611,8 @@ export default function App() {
               onTitleChange={updateTacticTitle}
               onSave={saveCurrentTactic}
               onLoadSaved={loadRecentTactic}
+              onExportJson={exportTacticJson}
+              onImportJson={importTacticJson}
               savedSummary={savedSummary}
               status={saveStatus}
               disabled={editingDisabled}

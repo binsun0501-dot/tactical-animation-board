@@ -1,12 +1,31 @@
+import { useRef } from "react";
+
 export function SavePanel({
   tacticTitle,
   onTitleChange,
   onSave,
   onLoadSaved,
+  onExportJson,
+  onImportJson,
   savedSummary,
   status,
   disabled,
 }) {
+  const fileInputRef = useRef(null);
+
+  function openFilePicker() {
+    fileInputRef.current?.click();
+  }
+
+  function handleFileChange(event) {
+    const [file] = event.target.files;
+    if (file) {
+      onImportJson(file);
+    }
+
+    event.target.value = "";
+  }
+
   return (
     <section className="save-panel" aria-label="保存战术">
       <label className="tactic-title-field">
@@ -35,6 +54,37 @@ export function SavePanel({
           打开最近
         </button>
       </div>
+
+      <div className="save-actions">
+        <button
+          className="small-button"
+          type="button"
+          data-testid="export-json"
+          onClick={onExportJson}
+          disabled={disabled}
+        >
+          导出战术
+        </button>
+        <button
+          className="small-button"
+          type="button"
+          data-testid="import-json"
+          onClick={openFilePicker}
+          disabled={disabled}
+        >
+          打开文件
+        </button>
+      </div>
+
+      <input
+        ref={fileInputRef}
+        className="file-input"
+        data-testid="import-json-file"
+        type="file"
+        accept="application/json,.json"
+        onChange={handleFileChange}
+        tabIndex={-1}
+      />
 
       <p className="saved-summary">
         {savedSummary ? `最近保存：${savedSummary.title}` : "还没有本地保存"}
