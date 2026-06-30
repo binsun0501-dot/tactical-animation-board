@@ -213,6 +213,11 @@ h1 {
   color: rgba(255, 255, 255, 0.82);
 }
 
+.step-button.playback-current {
+  border-color: #ffd234;
+  box-shadow: 0 0 0 3px rgba(255, 210, 52, 0.28);
+}
+
 .step-note {
   display: grid;
   gap: 6px;
@@ -235,20 +240,108 @@ h1 {
   resize: vertical;
 }
 
+.step-note textarea:disabled {
+  background: #f3f7f4;
+  color: #64766a;
+}
+
 .board-area {
   min-width: 0;
   min-height: 0;
+  display: grid;
+  grid-template-rows: auto 1fr;
+  gap: 12px;
+}
+
+.playback-strip {
+  min-height: 76px;
+  padding: 12px 14px;
+  border: 1px solid rgba(26, 66, 44, 0.12);
+  border-radius: 8px;
+  background: rgba(250, 255, 252, 0.94);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.playback-summary {
+  min-width: 0;
+}
+
+.playback-summary span,
+.playback-summary strong,
+.playback-summary p {
+  display: block;
+}
+
+.playback-summary span {
+  color: #17634a;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.playback-summary strong {
+  margin-top: 3px;
+  color: #10271d;
+  font-size: 18px;
+  line-height: 1.2;
+}
+
+.playback-summary p {
+  max-width: 680px;
+  margin: 3px 0 0;
+  color: #465b50;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.playback-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.control-button {
+  min-height: 40px;
+  padding: 0 13px;
+  border: 1px solid rgba(28, 72, 49, 0.14);
+  border-radius: 8px;
+  background: #ffffff;
+  color: #244535;
+  font-size: 14px;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.control-button.primary {
+  border-color: #176df2;
+  background: #176df2;
+  color: #ffffff;
+}
+
+.control-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.46;
 }
 
 .board-frame {
   width: 100%;
-  min-height: 620px;
-  height: calc(100vh - 124px);
+  min-height: 540px;
+  height: calc(100vh - 212px);
   padding: 12px;
   border: 1px solid rgba(26, 66, 44, 0.12);
   border-radius: 8px;
   background: #f8fffa;
   box-shadow: 0 24px 60px rgba(41, 84, 55, 0.12);
+}
+
+.board-frame.read-only .player-piece,
+.board-frame.read-only .ball-piece {
+  cursor: default;
 }
 
 .tactic-board {
@@ -397,6 +490,19 @@ h1 {
   .tool-button {
     min-width: 0;
     min-height: 48px;
+  }
+
+  .playback-strip {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .playback-actions {
+    justify-content: stretch;
+  }
+
+  .control-button {
+    flex: 1 1 92px;
   }
 
   .step-panel {

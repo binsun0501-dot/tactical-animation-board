@@ -9,6 +9,7 @@ export function TacticBoard({
   activeTool,
   boardState,
   fieldView,
+  readOnly = false,
   selectedPathId,
   setBoardState,
   setSelectedPathId,
@@ -29,7 +30,7 @@ export function TacticBoard({
   }
 
   function startDrag(event, target) {
-    if (activeTool !== "move") {
+    if (readOnly || activeTool !== "move") {
       return;
     }
 
@@ -39,6 +40,10 @@ export function TacticBoard({
   }
 
   function startDraw(event) {
+    if (readOnly) {
+      return;
+    }
+
     if (activeTool !== "run" && activeTool !== "pass") {
       setSelectedPathId(null);
       return;
@@ -104,7 +109,10 @@ export function TacticBoard({
   }
 
   return (
-    <div className="board-frame" data-field-view={fieldView}>
+    <div
+      className={readOnly ? "board-frame read-only" : "board-frame"}
+      data-field-view={fieldView}
+    >
       <svg
         ref={svgRef}
         className="tactic-board"
@@ -144,6 +152,7 @@ export function TacticBoard({
         <PathLayer
           draftPath={draftPath}
           paths={boardState.paths}
+          readOnly={readOnly}
           selectedPathId={selectedPathId}
           setSelectedPathId={setSelectedPathId}
         />
@@ -183,7 +192,7 @@ export function TacticBoard({
   );
 }
 
-function PathLayer({ draftPath, paths, selectedPathId, setSelectedPathId }) {
+function PathLayer({ draftPath, paths, readOnly, selectedPathId, setSelectedPathId }) {
   const visiblePaths = draftPath ? [...paths, draftPath] : paths;
 
   return (
@@ -206,10 +215,14 @@ function PathLayer({ draftPath, paths, selectedPathId, setSelectedPathId }) {
               y1={path.from.y}
               x2={path.to.x}
               y2={path.to.y}
-              onPointerDown={(event) => {
-                event.stopPropagation();
-                setSelectedPathId(path.id);
-              }}
+              onPointerDown={
+                readOnly
+                  ? undefined
+                  : (event) => {
+                      event.stopPropagation();
+                      setSelectedPathId(path.id);
+                    }
+              }
             />
             <line
               className="path-visible"

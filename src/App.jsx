@@ -1,24 +1,115 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { TacticBoard } from "./components/TacticBoard.jsx";
 import {
   cloneBoardState,
   createInitialBoardState,
   createInitialSteps,
 } from "./data/initialBoard.js";
+import {
+  PLAYBACK_STEP_DURATION_MS,
+  createBoardStateFromStep,
+  resolvePlaybackFrame,
+} from "./utils/playback.js";
+
+const IDLE_PLAYBACK = {
+  status: "idle",
+  segmentIndex: 0,
+  progress: 0,
+};
 
 export default function App() {
-  const initialBoardState = useMemo(() => createInitialBoardState(), []);
   const [steps, setSteps] = useState(() => createInitialSteps());
   const [activeStepId, setActiveStepId] = useState("step_0");
   const [fieldView, setFieldView] = useState("half");
   const [activeTool, setActiveTool] = useState("move");
   const [selectedPathId, setSelectedPathId] = useState(null);
+  const [playback, setPlayback] = useState(IDLE_PLAYBACK);
+  const lastFrameTimeRef = useRef(null);
+
   const activeStep = steps.find((step) => step.id === activeStepId) ?? steps[0];
-  const boardState = {
-    ...activeStep.state,
-    paths: activeStep.paths,
-  };
+  const boardState = createBoardStateFromStep(activeStep);
+  const playbackFrame = useMemo(
+    () => resolvePlaybackFrame(steps, playback),
+    [playback, steps],
+  );
+  const isPlaybackVisible = playback.status !== "idle";
+  const displayedBoardState = playbackFrame?.boardState ?? boardState;
+  const displayedStep = playbackFrame?.displayStep ?? activeStep;
+  const displayedStepIndex =
+    playbackFrame?.displayStepIndex ??
+    Math.max(
+      0,
+      steps.findIndex((step) => step.id === activeStepId),
+    );
   const canAddStep = steps.length < 3;
+  const canPlay = steps.length > 1;
+  const editingDisabled = isPlaybackVisible;
+
+  useEffect(() => {
+    if (playback.status !== "playing") {
+      lastFrameTimeRef.current = null;
+      return undefined;
+    }
+
+    let frameId = 0;
+
+    function tick(timestamp) {
+      if (lastFrameTimeRef.current === null) {
+        lastFrameTimeRef.current = timestamp;
+      }
+
+      const deltaTime = timestamp - lastFrameTimeRef.current;
+      lastFrameTimeRef.current = timestamp;
+
+      setPlayback((currentPlayback) => {
+        if (currentPlayback.status !== "playing") {
+          return currentPlayback;
+        }
+
+        const lastSegmentIndex = Math.max(0, steps.length - 2);
+        let nextSegmentIndex = currentPlayback.segmentIndex;
+        let nextProgress =
+          currentPlayback.progress + deltaTime / PLAYBACK_STEP_DURATION_MS;
+
+        while (nextProgress >= 1 && nextSegmentIndex < lastSegmentIndex) {
+          nextProgress -= 1;
+          nextSegmentIndex += 1;
+        }
+
+        if (nextProgress >= 1 && nextSegmentIndex >= lastSegmentIndex) {
+          return {
+            status: "ended",
+            segmentIndex: lastSegmentIndex,
+            progress: 1,
+          };
+        }
+
+        return {
+          status: "playing",
+          segmentIndex: nextSegmentIndex,
+          progress: nextProgress,
+        };
+      });
+
+      frameId = window.requestAnimationFrame(tick);
+    }
+
+    frameId = window.requestAnimationFrame(tick);
+
+    return () => {
+      window.cancelAnimationFrame(frameId);
+    };
+  }, [playback.status, steps.length]);
+
+  useEffect(() => {
+    if (playback.status === "ended" && steps.length > 0) {
+      setActiveStepId(steps[steps.length - 1].id);
+    }
+  }, [playback.status, steps]);
+
+  function resetPlayback() {
+    setPlayback(IDLE_PLAYBACK);
+  }
 
   function restoreDefaultLayout() {
     updateCurrentStepBoard(() => createInitialBoardState());
@@ -73,10 +164,7 @@ export default function App() {
           return step;
         }
 
-        const currentBoard = {
-          ...step.state,
-          paths: step.paths,
-        };
+        const currentBoard = createBoardStateFromStep(step);
         const nextBoard =
           typeof updater === "function" ? updater(currentBoard) : updater;
 
@@ -94,13 +182,14 @@ export default function App() {
   }
 
   function selectStep(stepId) {
+    resetPlayback();
     setActiveStepId(stepId);
     setSelectedPathId(null);
     setActiveTool("move");
   }
 
   function addNextStep() {
-    if (!canAddStep) {
+    if (!canAddStep || editingDisabled) {
       return;
     }
 
@@ -131,6 +220,64 @@ export default function App() {
         step.id === activeStepId ? { ...step, note } : step,
       ),
     );
+  }
+
+  function playSteps() {
+    if (!canPlay) {
+      return;
+    }
+
+    setActiveTool("move");
+    setSelectedPathId(null);
+    setPlayback((currentPlayback) => {
+      if (currentPlayback.status === "paused") {
+        return {
+          ...currentPlayback,
+          status: "playing",
+        };
+      }
+
+      return {
+        status: "playing",
+        segmentIndex: 0,
+        progress: 0,
+      };
+    });
+  }
+
+  function pausePlayback() {
+    setPlayback((currentPlayback) =>
+      currentPlayback.status === "playing"
+        ? {
+            ...currentPlayback,
+            status: "paused",
+          }
+        : currentPlayback,
+    );
+  }
+
+  function replaySteps() {
+    if (!canPlay) {
+      return;
+    }
+
+    setActiveTool("move");
+    setSelectedPathId(null);
+    setPlayback({
+      status: "playing",
+      segmentIndex: 0,
+      progress: 0,
+    });
+  }
+
+  function returnToEdit() {
+    if (displayedStep?.id) {
+      setActiveStepId(displayedStep.id);
+    }
+
+    resetPlayback();
+    setSelectedPathId(null);
+    setActiveTool("move");
   }
 
   return (
@@ -165,6 +312,7 @@ export default function App() {
               className={activeTool === "move" ? "tool-button active" : "tool-button"}
               type="button"
               onClick={() => setActiveTool("move")}
+              disabled={editingDisabled}
             >
               移动
             </button>
@@ -172,6 +320,7 @@ export default function App() {
               className={activeTool === "run" ? "tool-button active" : "tool-button"}
               type="button"
               onClick={() => setActiveTool("run")}
+              disabled={editingDisabled}
             >
               跑动箭头
             </button>
@@ -179,6 +328,7 @@ export default function App() {
               className={activeTool === "pass" ? "tool-button active" : "tool-button"}
               type="button"
               onClick={() => setActiveTool("pass")}
+              disabled={editingDisabled}
             >
               球路箭头
             </button>
@@ -186,7 +336,7 @@ export default function App() {
               className="tool-button"
               type="button"
               onClick={undoLatestPath}
-              disabled={boardState.paths.length === 0}
+              disabled={editingDisabled || boardState.paths.length === 0}
             >
               撤销
             </button>
@@ -194,7 +344,7 @@ export default function App() {
               className="tool-button"
               type="button"
               onClick={deleteSelectedPath}
-              disabled={!selectedPathId}
+              disabled={editingDisabled || !selectedPathId}
             >
               删除路线
             </button>
@@ -202,14 +352,24 @@ export default function App() {
               className="tool-button"
               type="button"
               onClick={clearPaths}
-              disabled={boardState.paths.length === 0}
+              disabled={editingDisabled || boardState.paths.length === 0}
             >
               清除路线
             </button>
-            <button className="tool-button" type="button" onClick={restoreDefaultLayout}>
+            <button
+              className="tool-button"
+              type="button"
+              onClick={restoreDefaultLayout}
+              disabled={editingDisabled}
+            >
               恢复默认
             </button>
-            <button className="tool-button danger" type="button" onClick={clearBoard}>
+            <button
+              className="tool-button danger"
+              type="button"
+              onClick={clearBoard}
+              disabled={editingDisabled}
+            >
               清空画面
             </button>
 
@@ -220,26 +380,35 @@ export default function App() {
                   className="small-button"
                   type="button"
                   onClick={addNextStep}
-                  disabled={!canAddStep}
+                  disabled={!canAddStep || editingDisabled}
                 >
                   新增下一步
                 </button>
               </div>
 
               <div className="step-list">
-                {steps.map((step) => (
-                  <button
-                    key={step.id}
-                    className={
-                      step.id === activeStepId ? "step-button active" : "step-button"
-                    }
-                    type="button"
-                    onClick={() => selectStep(step.id)}
-                  >
-                    <strong>{step.title}</strong>
-                    <span>{step.baseStateFromStepId ? "继承上一状态" : "初始站位"}</span>
-                  </button>
-                ))}
+                {steps.map((step) => {
+                  const isCurrentStep = step.id === displayedStep?.id;
+                  const isEditingStep = step.id === activeStepId;
+
+                  return (
+                    <button
+                      key={step.id}
+                      className={[
+                        "step-button",
+                        isEditingStep ? "active" : "",
+                        isCurrentStep && isPlaybackVisible ? "playback-current" : "",
+                      ]
+                        .filter(Boolean)
+                        .join(" ")}
+                      type="button"
+                      onClick={() => selectStep(step.id)}
+                    >
+                      <strong>{step.title}</strong>
+                      <span>{step.baseStateFromStepId ? "继承上一状态" : "初始站位"}</span>
+                    </button>
+                  );
+                })}
               </div>
 
               <label className="step-note">
@@ -248,16 +417,30 @@ export default function App() {
                   value={activeStep.note}
                   onChange={(event) => updateStepNote(event.target.value)}
                   rows="3"
+                  disabled={editingDisabled}
                 />
               </label>
             </div>
           </aside>
 
           <section className="board-area">
+            <PlaybackStrip
+              canPlay={canPlay}
+              currentStepIndex={displayedStepIndex}
+              currentStepNote={displayedStep?.note}
+              isPlaybackVisible={isPlaybackVisible}
+              onPause={pausePlayback}
+              onPlay={playSteps}
+              onReplay={replaySteps}
+              onReturnToEdit={returnToEdit}
+              status={playback.status}
+              totalSteps={steps.length}
+            />
             <TacticBoard
               activeTool={activeTool}
-              boardState={boardState}
+              boardState={displayedBoardState}
               fieldView={fieldView}
+              readOnly={isPlaybackVisible}
               selectedPathId={selectedPathId}
               setSelectedPathId={setSelectedPathId}
               setBoardState={updateCurrentStepBoard}
@@ -267,4 +450,81 @@ export default function App() {
       </section>
     </main>
   );
+}
+
+function PlaybackStrip({
+  canPlay,
+  currentStepIndex,
+  currentStepNote,
+  isPlaybackVisible,
+  onPause,
+  onPlay,
+  onReplay,
+  onReturnToEdit,
+  status,
+  totalSteps,
+}) {
+  const statusText = getPlaybackStatusText(status, canPlay);
+  const stepText = `Step ${currentStepIndex} / ${Math.max(totalSteps - 1, 0)}`;
+
+  return (
+    <div className="playback-strip" aria-label="播放控制">
+      <div className="playback-summary">
+        <span>{statusText}</span>
+        <strong>{stepText}</strong>
+        <p>{currentStepNote}</p>
+      </div>
+      <div className="playback-actions">
+        <button
+          className="control-button primary"
+          type="button"
+          onClick={onPlay}
+          disabled={!canPlay || status === "playing"}
+        >
+          {status === "paused" ? "继续" : "播放"}
+        </button>
+        <button
+          className="control-button"
+          type="button"
+          onClick={onPause}
+          disabled={status !== "playing"}
+        >
+          暂停
+        </button>
+        <button
+          className="control-button"
+          type="button"
+          onClick={onReplay}
+          disabled={!canPlay}
+        >
+          重播
+        </button>
+        {isPlaybackVisible ? (
+          <button className="control-button" type="button" onClick={onReturnToEdit}>
+            返回编辑
+          </button>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
+function getPlaybackStatusText(status, canPlay) {
+  if (!canPlay) {
+    return "新增 Step 1 后可播放";
+  }
+
+  if (status === "playing") {
+    return "播放中";
+  }
+
+  if (status === "paused") {
+    return "已暂停";
+  }
+
+  if (status === "ended") {
+    return "播放结束";
+  }
+
+  return "准备播放";
 }
