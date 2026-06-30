@@ -24,6 +24,7 @@ export default function App() {
   const [activeTool, setActiveTool] = useState("move");
   const [selectedPathId, setSelectedPathId] = useState(null);
   const [playback, setPlayback] = useState(IDLE_PLAYBACK);
+  const [appMode, setAppMode] = useState("edit");
   const lastFrameTimeRef = useRef(null);
 
   const activeStep = steps.find((step) => step.id === activeStepId) ?? steps[0];
@@ -44,6 +45,7 @@ export default function App() {
   const canAddStep = steps.length < 3;
   const canPlay = steps.length > 1;
   const editingDisabled = isPlaybackVisible;
+  const isPresentationMode = appMode === "presentation";
 
   useEffect(() => {
     if (playback.status !== "playing") {
@@ -280,6 +282,36 @@ export default function App() {
     setActiveTool("move");
   }
 
+  function enterPresentationMode() {
+    resetPlayback();
+    setSelectedPathId(null);
+    setActiveTool("move");
+    setAppMode("presentation");
+  }
+
+  function returnToEditMode() {
+    returnToEdit();
+    setAppMode("edit");
+  }
+
+  if (isPresentationMode) {
+    return (
+      <PresentationMode
+        canPlay={canPlay}
+        currentStepIndex={displayedStepIndex}
+        displayedBoardState={displayedBoardState}
+        displayedStep={displayedStep}
+        fieldView={fieldView}
+        onPause={pausePlayback}
+        onPlay={playSteps}
+        onReplay={replaySteps}
+        onReturnToEdit={returnToEditMode}
+        playbackStatus={playback.status}
+        steps={steps}
+      />
+    );
+  }
+
   return (
     <main className="app-shell">
       <section className="editor-shell" aria-label="现场白板编辑器">
@@ -302,6 +334,9 @@ export default function App() {
               onClick={() => setFieldView("full")}
             >
               全场
+            </button>
+            <button className="toggle action" type="button" onClick={enterPresentationMode}>
+              展示模式
             </button>
           </div>
         </header>
@@ -433,6 +468,7 @@ export default function App() {
               onPlay={playSteps}
               onReplay={replaySteps}
               onReturnToEdit={returnToEdit}
+              showReturnToEdit={isPlaybackVisible}
               status={playback.status}
               totalSteps={steps.length}
             />
@@ -461,6 +497,7 @@ function PlaybackStrip({
   onPlay,
   onReplay,
   onReturnToEdit,
+  showReturnToEdit,
   status,
   totalSteps,
 }) {
@@ -499,12 +536,84 @@ function PlaybackStrip({
         >
           重播
         </button>
-        {isPlaybackVisible ? (
+        {isPlaybackVisible || showReturnToEdit ? (
           <button className="control-button" type="button" onClick={onReturnToEdit}>
             返回编辑
           </button>
         ) : null}
       </div>
+    </div>
+  );
+}
+
+function PresentationMode({
+  canPlay,
+  currentStepIndex,
+  displayedBoardState,
+  displayedStep,
+  fieldView,
+  onPause,
+  onPlay,
+  onReplay,
+  onReturnToEdit,
+  playbackStatus,
+  steps,
+}) {
+  return (
+    <main className="app-shell presentation-app">
+      <section className="presentation-shell" aria-label="现场展示模式">
+        <header className="presentation-header">
+          <button className="control-button" type="button" onClick={onReturnToEdit}>
+            返回编辑
+          </button>
+          <div>
+            <p className="stage-label">现场展示</p>
+            <h1>战术动画板</h1>
+          </div>
+          <StepProgress steps={steps} currentStepId={displayedStep?.id} />
+        </header>
+
+        <section className="presentation-board">
+          <TacticBoard
+            activeTool="move"
+            boardState={displayedBoardState}
+            fieldView={fieldView}
+            readOnly
+            selectedPathId={null}
+            setSelectedPathId={() => {}}
+            setBoardState={() => {}}
+          />
+        </section>
+
+        <PlaybackStrip
+          canPlay={canPlay}
+          currentStepIndex={currentStepIndex}
+          currentStepNote={displayedStep?.note}
+          isPlaybackVisible={playbackStatus !== "idle"}
+          onPause={onPause}
+          onPlay={onPlay}
+          onReplay={onReplay}
+          onReturnToEdit={onReturnToEdit}
+          showReturnToEdit
+          status={playbackStatus}
+          totalSteps={steps.length}
+        />
+      </section>
+    </main>
+  );
+}
+
+function StepProgress({ steps, currentStepId }) {
+  return (
+    <div className="step-progress" aria-label="当前步骤">
+      {steps.map((step) => (
+        <span
+          key={step.id}
+          className={step.id === currentStepId ? "current" : undefined}
+        >
+          {step.title}
+        </span>
+      ))}
     </div>
   );
 }
