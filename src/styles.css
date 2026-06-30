@@ -1,0 +1,98 @@
+:root {
+  font-family:
+    Inter, "PingFang SC", "Microsoft YaHei", system-ui, -apple-system,
+    BlinkMacSystemFont, "Segoe UI", sans-serif;
+  color: #172033;
+  background: #eef6ef;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+}
+
+button {
+  font: inherit;
+}
+
+.app-shell {
+  min-height: 100vh;
+  padding: 24px;
+  display: grid;
+  place-items: center;
+}
+
+.start-screen {
+  width: min(960px, 100%);
+  min-height: 520px;
+  padding: 48px;
+  border: 1px solid rgba(24, 57, 38, 0.12);
+  border-radius: 8px;
+  background: #f9fffb;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 40px;
+}
+
+.stage-label {
+  margin: 0 0 12px;
+  color: #17634a;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+h1 {
+  margin: 0;
+  color: #10271d;
+  font-size: clamp(40px, 6vw, 72px);
+  line-height: 1.02;
+  letter-spacing: 0;
+}
+
+.intro {
+  max-width: 520px;
+  margin: 20px 0 0;
+  color: #405445;
+  font-size: 20px;
+  line-height: 1.6;
+}
+
+.primary-action {
+  min-width: 176px;
+  min-height: 52px;
+  border: 0;
+  border-radius: 8px;
+  background: #176df2;
+  color: white;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 12px 24px rgba(23, 109, 242, 0.22);
+}
+
+.primary-action:hover {
+  background: #115bd0;
+}
+
+@media (max-width: 720px) {
+  .app-shell {
+    padding: 16px;
+  }
+
+  .start-screen {
+    min-height: 480px;
+    padding: 28px;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+  }
+}
