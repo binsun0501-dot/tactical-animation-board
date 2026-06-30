@@ -5,9 +5,17 @@ const BOARD_HEIGHT = 64;
 const PIECE_RADIUS = 3.1;
 const BALL_RADIUS = 2.1;
 
-export function TacticBoard({ boardState, fieldView, setBoardState }) {
+export function TacticBoard({
+  activeTool,
+  boardState,
+  fieldView,
+  selectedPathId,
+  setBoardState,
+  setSelectedPathId,
+}) {
   const svgRef = useRef(null);
   const [dragTarget, setDragTarget] = useState(null);
+  const [draftPath, setDraftPath] = useState(null);
 
   function pointFromEvent(event) {
     const rect = svgRef.current.getBoundingClientRect();
@@ -21,12 +29,46 @@ export function TacticBoard({ boardState, fieldView, setBoardState }) {
   }
 
   function startDrag(event, target) {
+    if (activeTool !== "move") {
+      return;
+    }
+
     event.preventDefault();
     event.currentTarget.setPointerCapture(event.pointerId);
     setDragTarget({ ...target, pointerId: event.pointerId });
   }
 
+  function startDraw(event) {
+    if (activeTool !== "run" && activeTool !== "pass") {
+      setSelectedPathId(null);
+      return;
+    }
+
+    event.preventDefault();
+    event.currentTarget.setPointerCapture(event.pointerId);
+    const point = pointFromEvent(event);
+    setDraftPath({
+      id: `path_${activeTool}_${Date.now()}`,
+      type: activeTool,
+      from: point,
+      to: point,
+      points: [point, point],
+      pointerId: event.pointerId,
+    });
+    setSelectedPathId(null);
+  }
+
   function moveDrag(event) {
+    if (draftPath) {
+      const point = pointFromEvent(event);
+      setDraftPath((current) => ({
+        ...current,
+        to: point,
+        points: [current.from, point],
+      }));
+      return;
+    }
+
     if (!dragTarget) {
       return;
     }
@@ -36,6 +78,26 @@ export function TacticBoard({ boardState, fieldView, setBoardState }) {
   }
 
   function endDrag(event) {
+    if (draftPath?.pointerId === event.pointerId) {
+      const distance = getDistance(draftPath.from, draftPath.to);
+      if (distance > 2.4) {
+        const path = {
+          id: draftPath.id,
+          type: draftPath.type,
+          from: draftPath.from,
+          to: draftPath.to,
+          points: draftPath.points,
+        };
+        setBoardState((current) => ({
+          ...current,
+          paths: [...current.paths, path],
+        }));
+        setSelectedPathId(path.id);
+      }
+      setDraftPath(null);
+      return;
+    }
+
     if (dragTarget?.pointerId === event.pointerId) {
       setDragTarget(null);
     }
@@ -49,11 +111,42 @@ export function TacticBoard({ boardState, fieldView, setBoardState }) {
         viewBox={`0 0 ${BOARD_WIDTH} ${BOARD_HEIGHT}`}
         role="img"
         aria-label="2D 足球战术白板"
+        onPointerDown={startDraw}
         onPointerMove={moveDrag}
         onPointerUp={endDrag}
         onPointerCancel={endDrag}
       >
+        <defs>
+          <marker
+            id="run-arrow"
+            markerWidth="6"
+            markerHeight="6"
+            refX="5"
+            refY="3"
+            orient="auto"
+            markerUnits="strokeWidth"
+          >
+            <path d="M 0 0 L 6 3 L 0 6 Z" className="run-arrow-head" />
+          </marker>
+          <marker
+            id="pass-arrow"
+            markerWidth="6"
+            markerHeight="6"
+            refX="5"
+            refY="3"
+            orient="auto"
+            markerUnits="strokeWidth"
+          >
+            <path d="M 0 0 L 6 3 L 0 6 Z" className="pass-arrow-head" />
+          </marker>
+        </defs>
         <FieldMarkings fieldView={fieldView} />
+        <PathLayer
+          draftPath={draftPath}
+          paths={boardState.paths}
+          selectedPathId={selectedPathId}
+          setSelectedPathId={setSelectedPathId}
+        />
 
         {boardState.players.map((piece) => (
           <PlayerPiece
@@ -87,6 +180,49 @@ export function TacticBoard({ boardState, fieldView, setBoardState }) {
         ) : null}
       </svg>
     </div>
+  );
+}
+
+function PathLayer({ draftPath, paths, selectedPathId, setSelectedPathId }) {
+  const visiblePaths = draftPath ? [...paths, draftPath] : paths;
+
+  return (
+    <g className="path-layer">
+      {visiblePaths.map((path) => {
+        const isSelected = path.id === selectedPathId;
+        const className = [
+          "tactic-path",
+          path.type === "pass" ? "pass-path" : "run-path",
+          isSelected ? "selected" : "",
+        ]
+          .filter(Boolean)
+          .join(" ");
+
+        return (
+          <g key={path.id} className={className}>
+            <line
+              className="path-hit"
+              x1={path.from.x}
+              y1={path.from.y}
+              x2={path.to.x}
+              y2={path.to.y}
+              onPointerDown={(event) => {
+                event.stopPropagation();
+                setSelectedPathId(path.id);
+              }}
+            />
+            <line
+              className="path-visible"
+              x1={path.from.x}
+              y1={path.from.y}
+              x2={path.to.x}
+              y2={path.to.y}
+              markerEnd={path.type === "pass" ? "url(#pass-arrow)" : "url(#run-arrow)"}
+            />
+          </g>
+        );
+      })}
+    </g>
   );
 }
 
@@ -186,4 +322,8 @@ function moveBoardItem(current, target, position) {
 
 function clamp(value, min, max) {
   return Math.min(Math.max(value, min), max);
+}
+
+function getDistance(start, end) {
+  return Math.hypot(end.x - start.x, end.y - start.y);
 }

@@ -125,6 +125,11 @@ h1 {
   padding: 0 12px;
 }
 
+.tool-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.46;
+}
+
 .tool-button.danger {
   color: #b52323;
 }
@@ -173,6 +178,48 @@ h1 {
   stroke: none;
   font-size: 2.8px;
   font-weight: 800;
+}
+
+.path-layer {
+  pointer-events: stroke;
+}
+
+.path-hit {
+  stroke: transparent;
+  stroke-width: 4.2;
+  stroke-linecap: round;
+}
+
+.path-visible {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.15;
+  pointer-events: none;
+}
+
+.run-path .path-visible {
+  stroke: #166fff;
+  stroke-dasharray: 2.1 1.4;
+  marker-end: url("#run-arrow");
+}
+
+.pass-path .path-visible {
+  stroke: #ffd234;
+  marker-end: url("#pass-arrow");
+}
+
+.tactic-path.selected .path-visible {
+  filter: drop-shadow(0 0 1.5px rgba(255, 255, 255, 0.9));
+  stroke-width: 1.55;
+}
+
+.run-arrow-head {
+  fill: #166fff;
+}
+
+.pass-arrow-head {
+  fill: #ffd234;
 }
 
 .player-piece,

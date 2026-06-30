@@ -20,6 +20,7 @@ export function createInitialBoardState() {
       position: { x: 60, y: 43 },
       ownerPlayerId: "p6",
     },
+    paths: [],
   };
 }
 

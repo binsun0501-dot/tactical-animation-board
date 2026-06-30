@@ -6,6 +6,8 @@ export default function App() {
   const initialBoardState = useMemo(() => createInitialBoardState(), []);
   const [boardState, setBoardState] = useState(initialBoardState);
   const [fieldView, setFieldView] = useState("half");
+  const [activeTool, setActiveTool] = useState("move");
+  const [selectedPathId, setSelectedPathId] = useState(null);
 
   function restoreDefaultLayout() {
     setBoardState(createInitialBoardState());
@@ -21,7 +23,36 @@ export default function App() {
       players: [],
       opponents: [],
       ball: null,
+      paths: [],
     });
+  }
+
+  function clearPaths() {
+    setBoardState((current) => ({
+      ...current,
+      paths: [],
+    }));
+    setSelectedPathId(null);
+  }
+
+  function undoLatestPath() {
+    setBoardState((current) => ({
+      ...current,
+      paths: current.paths.slice(0, -1),
+    }));
+    setSelectedPathId(null);
+  }
+
+  function deleteSelectedPath() {
+    if (!selectedPathId) {
+      return;
+    }
+
+    setBoardState((current) => ({
+      ...current,
+      paths: current.paths.filter((path) => path.id !== selectedPathId),
+    }));
+    setSelectedPathId(null);
   }
 
   return (
@@ -52,8 +83,50 @@ export default function App() {
 
         <div className="workspace">
           <aside className="tool-rail" aria-label="现场工具栏">
-            <button className="tool-button active" type="button">
+            <button
+              className={activeTool === "move" ? "tool-button active" : "tool-button"}
+              type="button"
+              onClick={() => setActiveTool("move")}
+            >
               移动
+            </button>
+            <button
+              className={activeTool === "run" ? "tool-button active" : "tool-button"}
+              type="button"
+              onClick={() => setActiveTool("run")}
+            >
+              跑动箭头
+            </button>
+            <button
+              className={activeTool === "pass" ? "tool-button active" : "tool-button"}
+              type="button"
+              onClick={() => setActiveTool("pass")}
+            >
+              球路箭头
+            </button>
+            <button
+              className="tool-button"
+              type="button"
+              onClick={undoLatestPath}
+              disabled={boardState.paths.length === 0}
+            >
+              撤销
+            </button>
+            <button
+              className="tool-button"
+              type="button"
+              onClick={deleteSelectedPath}
+              disabled={!selectedPathId}
+            >
+              删除路线
+            </button>
+            <button
+              className="tool-button"
+              type="button"
+              onClick={clearPaths}
+              disabled={boardState.paths.length === 0}
+            >
+              清除路线
             </button>
             <button className="tool-button" type="button" onClick={restoreDefaultLayout}>
               恢复默认
@@ -65,8 +138,11 @@ export default function App() {
 
           <section className="board-area">
             <TacticBoard
+              activeTool={activeTool}
               boardState={boardState}
               fieldView={fieldView}
+              selectedPathId={selectedPathId}
+              setSelectedPathId={setSelectedPathId}
               setBoardState={setBoardState}
             />
           </section>
