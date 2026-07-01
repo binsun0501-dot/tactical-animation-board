@@ -282,6 +282,17 @@ h1 {
   opacity: 0.42;
 }
 
+.small-button.danger {
+  border-color: rgba(181, 35, 35, 0.22);
+  background: #fff4f1;
+  color: #b52323;
+}
+
+.step-actions {
+  display: flex;
+  gap: 6px;
+}
+
 .save-panel {
   display: flex;
   flex-direction: column;
@@ -966,6 +977,13 @@ h1 {
 
 .player-piece.away circle {
   fill: #e24737;
+}
+
+.player-piece.selected-piece circle,
+.ball-piece.selected-piece circle {
+  stroke: #ffd234;
+  stroke-width: 0.85;
+  filter: drop-shadow(0 0 2px rgba(255, 210, 52, 0.9));
 }
 
 .player-piece text {

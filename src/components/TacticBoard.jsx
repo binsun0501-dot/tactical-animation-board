@@ -11,8 +11,10 @@ export function TacticBoard({
   fieldView,
   readOnly = false,
   selectedPathId,
+  selectedPiece = null,
   setBoardState,
   setSelectedPathId,
+  setSelectedPiece = () => {},
 }) {
   const svgRef = useRef(null);
   const [dragTarget, setDragTarget] = useState(null);
@@ -35,6 +37,8 @@ export function TacticBoard({
     }
 
     event.preventDefault();
+    setSelectedPathId(null);
+    setSelectedPiece({ type: target.type, id: target.id });
     event.currentTarget.setPointerCapture(event.pointerId);
     setDragTarget({ ...target, pointerId: event.pointerId });
   }
@@ -46,6 +50,7 @@ export function TacticBoard({
 
     if (activeTool !== "run" && activeTool !== "pass") {
       setSelectedPathId(null);
+      setSelectedPiece(null);
       return;
     }
 
@@ -61,6 +66,7 @@ export function TacticBoard({
       pointerId: event.pointerId,
     });
     setSelectedPathId(null);
+    setSelectedPiece(null);
   }
 
   function moveDrag(event) {
@@ -162,6 +168,7 @@ export function TacticBoard({
             key={piece.id}
             piece={piece}
             kind="home"
+            selected={isSelectedPiece(selectedPiece, "player", piece.id)}
             onPointerDown={(event) =>
               startDrag(event, { type: "player", id: piece.id })
             }
@@ -173,6 +180,7 @@ export function TacticBoard({
             key={piece.id}
             piece={piece}
             kind="away"
+            selected={isSelectedPiece(selectedPiece, "opponent", piece.id)}
             onPointerDown={(event) =>
               startDrag(event, { type: "opponent", id: piece.id })
             }
@@ -182,6 +190,7 @@ export function TacticBoard({
         {boardState.ball ? (
           <BallPiece
             ball={boardState.ball}
+            selected={isSelectedPiece(selectedPiece, "ball", boardState.ball.id)}
             onPointerDown={(event) =>
               startDrag(event, { type: "ball", id: boardState.ball.id })
             }
@@ -269,10 +278,12 @@ function FieldMarkings({ fieldView }) {
   );
 }
 
-function PlayerPiece({ piece, kind, onPointerDown }) {
+function PlayerPiece({ piece, kind, onPointerDown, selected }) {
   return (
     <g
-      className={`player-piece ${kind}`}
+      className={["player-piece", kind, selected ? "selected-piece" : ""]
+        .filter(Boolean)
+        .join(" ")}
       transform={`translate(${piece.position.x} ${piece.position.y})`}
       onPointerDown={onPointerDown}
       tabIndex="0"
@@ -285,10 +296,10 @@ function PlayerPiece({ piece, kind, onPointerDown }) {
   );
 }
 
-function BallPiece({ ball, onPointerDown }) {
+function BallPiece({ ball, onPointerDown, selected }) {
   return (
     <g
-      className="ball-piece"
+      className={selected ? "ball-piece selected-piece" : "ball-piece"}
       transform={`translate(${ball.position.x} ${ball.position.y})`}
       onPointerDown={onPointerDown}
       tabIndex="0"
@@ -299,6 +310,10 @@ function BallPiece({ ball, onPointerDown }) {
       <path d="M -1.1 -0.4 L 0 -1.25 L 1.1 -0.4 L 0.7 0.95 L -0.7 0.95 Z" />
     </g>
   );
+}
+
+function isSelectedPiece(selectedPiece, type, id) {
+  return selectedPiece?.type === type && selectedPiece.id === id;
 }
 
 function moveBoardItem(current, target, position) {

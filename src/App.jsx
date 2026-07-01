@@ -73,6 +73,7 @@ export default function App() {
   const [savedSummary, setSavedSummary] = useState(() => getSavedTacticSummary());
   const [activeTool, setActiveTool] = useState("move");
   const [selectedPathId, setSelectedPathId] = useState(null);
+  const [selectedPiece, setSelectedPiece] = useState(null);
   const [playback, setPlayback] = useState(IDLE_PLAYBACK);
   const [appMode, setAppMode] = useState("home");
   const playbackRunIdRef = useRef(0);
@@ -92,7 +93,12 @@ export default function App() {
       0,
       steps.findIndex((step) => step.id === activeStepId),
     );
+  const activeStepIndex = Math.max(
+    0,
+    steps.findIndex((step) => step.id === activeStepId),
+  );
   const canAddStep = steps.length < 5;
+  const canDeleteCurrentStep = activeStepIndex > 0 && steps.length > 1;
   const canPlay = steps.length > 1;
   const editingDisabled = isPlaybackVisible;
   const isHomeMode = appMode === "home";
@@ -165,6 +171,7 @@ export default function App() {
 
   function restoreDefaultLayout() {
     updateCurrentStepBoard(() => createInitialBoardState());
+    setSelectedPiece(null);
   }
 
   function clearBoard() {
@@ -179,6 +186,7 @@ export default function App() {
       ball: null,
       paths: [],
     }));
+    setSelectedPiece(null);
   }
 
   function clearPaths() {
@@ -209,6 +217,96 @@ export default function App() {
     setSelectedPathId(null);
   }
 
+  function addHomePlayer() {
+    const nextPiece = {
+      id: `player_${Date.now()}`,
+      number: getNextPieceNumber(boardState.players),
+      position: getNewPiecePosition("home", boardState.players.length),
+    };
+
+    updateCurrentStepBoard((current) => {
+      return {
+        ...current,
+        players: [...current.players, nextPiece],
+      };
+    });
+    setSelectedPiece({ type: "player", id: nextPiece.id });
+    setActiveTool("move");
+    setSelectedPathId(null);
+  }
+
+  function addOpponentPlayer() {
+    const nextPiece = {
+      id: `opponent_${Date.now()}`,
+      number: getNextPieceNumber(boardState.opponents),
+      position: getNewPiecePosition("away", boardState.opponents.length),
+    };
+
+    updateCurrentStepBoard((current) => {
+      return {
+        ...current,
+        opponents: [...current.opponents, nextPiece],
+      };
+    });
+    setSelectedPiece({ type: "opponent", id: nextPiece.id });
+    setActiveTool("move");
+    setSelectedPathId(null);
+  }
+
+  function restoreFootball() {
+    const ball = {
+      id: boardState.ball?.id ?? "ball",
+      position: { x: 48, y: 32 },
+    };
+
+    updateCurrentStepBoard((current) => {
+      return {
+        ...current,
+        ball,
+      };
+    });
+    setSelectedPiece({ type: "ball", id: ball.id });
+    setActiveTool("move");
+    setSelectedPathId(null);
+  }
+
+  function deleteSelectedPiece() {
+    if (!selectedPiece) {
+      return;
+    }
+
+    const shouldDelete = window.confirm("删除选中的棋子或足球？");
+    if (!shouldDelete) {
+      return;
+    }
+
+    updateCurrentStepBoard((current) => {
+      if (selectedPiece.type === "player") {
+        return {
+          ...current,
+          players: current.players.filter((piece) => piece.id !== selectedPiece.id),
+        };
+      }
+
+      if (selectedPiece.type === "opponent") {
+        return {
+          ...current,
+          opponents: current.opponents.filter((piece) => piece.id !== selectedPiece.id),
+        };
+      }
+
+      if (selectedPiece.type === "ball") {
+        return {
+          ...current,
+          ball: null,
+        };
+      }
+
+      return current;
+    });
+    setSelectedPiece(null);
+  }
+
   function updateCurrentStepBoard(updater) {
     setSteps((currentSteps) =>
       currentSteps.map((step) => {
@@ -237,6 +335,7 @@ export default function App() {
     resetPlayback();
     setActiveStepId(stepId);
     setSelectedPathId(null);
+    setSelectedPiece(null);
     setActiveTool("move");
   }
 
@@ -261,9 +360,44 @@ export default function App() {
 
       setActiveStepId(nextStepId);
       setSelectedPathId(null);
+      setSelectedPiece(null);
       setActiveTool("move");
       return [...currentSteps, nextStep];
     });
+  }
+
+  function deleteCurrentStep() {
+    if (editingDisabled) {
+      return;
+    }
+
+    if (activeStepIndex === 0) {
+      setSaveStatus("Step 0 是初始站位，不能直接删除，可用恢复默认重置。");
+      return;
+    }
+
+    const shouldDelete = window.confirm("删除当前步骤？删除后会切换到相邻步骤。");
+    if (!shouldDelete) {
+      return;
+    }
+
+    setSteps((currentSteps) => {
+      const currentIndex = currentSteps.findIndex((step) => step.id === activeStepId);
+      if (currentIndex <= 0 || currentSteps.length <= 1) {
+        return currentSteps;
+      }
+
+      const remainingSteps = currentSteps.filter((step) => step.id !== activeStepId);
+      const normalizedSteps = normalizeStepOrder(remainingSteps);
+      const nextIndex = Math.min(currentIndex, normalizedSteps.length - 1);
+      setActiveStepId(normalizedSteps[nextIndex].id);
+      return normalizedSteps;
+    });
+    resetPlayback();
+    setSelectedPathId(null);
+    setSelectedPiece(null);
+    setActiveTool("move");
+    setSaveStatus("已删除当前步骤");
   }
 
   function updateStepNote(note) {
@@ -282,6 +416,7 @@ export default function App() {
     setTacticMeta(appState.tacticMeta);
     setActiveTool("move");
     setSelectedPathId(null);
+    setSelectedPiece(null);
     setSaveStatus(message);
   }
 
@@ -394,6 +529,7 @@ export default function App() {
 
     setActiveTool("move");
     setSelectedPathId(null);
+    setSelectedPiece(null);
     playbackRunIdRef.current += 1;
     const startedAt = getNow();
     setPlayback((currentPlayback) => {
@@ -437,6 +573,7 @@ export default function App() {
 
     setActiveTool("move");
     setSelectedPathId(null);
+    setSelectedPiece(null);
     playbackRunIdRef.current += 1;
     setPlayback({
       status: "playing",
@@ -453,12 +590,14 @@ export default function App() {
 
     resetPlayback();
     setSelectedPathId(null);
+    setSelectedPiece(null);
     setActiveTool("move");
   }
 
   function enterPresentationMode() {
     resetPlayback();
     setSelectedPathId(null);
+    setSelectedPiece(null);
     setActiveTool("move");
     setAppMode("presentation");
   }
@@ -476,6 +615,7 @@ export default function App() {
   function enterViewerMode() {
     resetPlayback();
     setSelectedPathId(null);
+    setSelectedPiece(null);
     setActiveTool("move");
     setAppMode("viewer");
   }
@@ -483,6 +623,7 @@ export default function App() {
   function enterTemplateLibrary() {
     resetPlayback();
     setSelectedPathId(null);
+    setSelectedPiece(null);
     setActiveTool("move");
     setAppMode("templates");
   }
@@ -508,6 +649,7 @@ export default function App() {
     resetPlayback();
     setActiveStepId(nextStep.id);
     setSelectedPathId(null);
+    setSelectedPiece(null);
     setActiveTool("move");
   }
 
@@ -646,6 +788,42 @@ export default function App() {
             <button
               className="tool-button"
               type="button"
+              data-testid="add-home-piece"
+              onClick={addHomePlayer}
+              disabled={editingDisabled}
+            >
+              加本方
+            </button>
+            <button
+              className="tool-button"
+              type="button"
+              data-testid="add-away-piece"
+              onClick={addOpponentPlayer}
+              disabled={editingDisabled}
+            >
+              加对手
+            </button>
+            <button
+              className="tool-button"
+              type="button"
+              data-testid="restore-ball"
+              onClick={restoreFootball}
+              disabled={editingDisabled}
+            >
+              足球
+            </button>
+            <button
+              className="tool-button danger"
+              type="button"
+              data-testid="delete-selected-piece"
+              onClick={deleteSelectedPiece}
+              disabled={editingDisabled || !selectedPiece}
+            >
+              删棋子
+            </button>
+            <button
+              className="tool-button"
+              type="button"
               onClick={undoLatestPath}
               disabled={editingDisabled || boardState.paths.length === 0}
             >
@@ -700,14 +878,25 @@ export default function App() {
             <div className="step-panel" aria-label="分步状态">
               <div className="step-panel-header">
                 <span>步骤</span>
-                <button
-                  className="small-button"
-                  type="button"
-                  onClick={addNextStep}
-                  disabled={!canAddStep || editingDisabled}
-                >
-                  新增下一步
-                </button>
+                <div className="step-actions">
+                  <button
+                    className="small-button"
+                    type="button"
+                    onClick={addNextStep}
+                    disabled={!canAddStep || editingDisabled}
+                  >
+                    新增
+                  </button>
+                  <button
+                    className="small-button danger"
+                    type="button"
+                    data-testid="delete-current-step"
+                    onClick={deleteCurrentStep}
+                    disabled={!canDeleteCurrentStep || editingDisabled}
+                  >
+                    删除
+                  </button>
+                </div>
               </div>
 
               <div className="step-list">
@@ -767,7 +956,9 @@ export default function App() {
               fieldView={fieldView}
               readOnly={isPlaybackVisible}
               selectedPathId={selectedPathId}
+              selectedPiece={selectedPiece}
               setSelectedPathId={setSelectedPathId}
+              setSelectedPiece={setSelectedPiece}
               setBoardState={updateCurrentStepBoard}
             />
           </section>
@@ -1362,6 +1553,52 @@ function getPlaybackStatusText(status, canPlay) {
   }
 
   return "准备播放";
+}
+
+function getNextPieceNumber(pieces) {
+  return (
+    pieces.reduce((largestNumber, piece) => {
+      const number = Number.parseInt(piece.number, 10);
+      return Number.isFinite(number) ? Math.max(largestNumber, number) : largestNumber;
+    }, 0) + 1
+  );
+}
+
+function getNewPiecePosition(kind, count) {
+  const row = count % 5;
+  const column = Math.floor(count / 5);
+  const x = kind === "home" ? 24 + column * 5 : 76 - column * 5;
+  const y = 16 + row * 8;
+
+  return {
+    x: clampBoardNumber(x, 8, 92),
+    y: clampBoardNumber(y, 8, 56),
+  };
+}
+
+function normalizeStepOrder(steps) {
+  return steps.map((step, index) => ({
+    ...step,
+    order: index,
+    title: normalizeStepTitle(step.title, index),
+    baseStateFromStepId: index === 0 ? null : steps[index - 1].id,
+  }));
+}
+
+function normalizeStepTitle(title, index) {
+  if (typeof title !== "string" || title.trim() === "") {
+    return `Step ${index}`;
+  }
+
+  if (/^Step\s+\d+/.test(title)) {
+    return title.replace(/^Step\s+\d+/, `Step ${index}`);
+  }
+
+  return `Step ${index} ${title}`;
+}
+
+function clampBoardNumber(value, min, max) {
+  return Math.min(Math.max(value, min), max);
 }
 
 function getNow() {
