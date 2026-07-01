@@ -73,6 +73,108 @@ h1 {
   letter-spacing: 0;
 }
 
+.home-app {
+  display: grid;
+  place-items: center;
+}
+
+.home-shell {
+  width: min(980px, 100%);
+  min-height: min(620px, calc(100vh - 36px));
+  padding: 24px;
+  border: 1px solid rgba(26, 66, 44, 0.12);
+  border-radius: 8px;
+  background: rgba(250, 255, 252, 0.94);
+  display: grid;
+  align-content: center;
+  gap: 22px;
+}
+
+.home-header {
+  display: grid;
+  gap: 6px;
+}
+
+.home-header h1 {
+  font-size: clamp(28px, 4vw, 44px);
+}
+
+.home-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.home-card {
+  min-height: 210px;
+  padding: 22px;
+  border: 1px solid rgba(28, 72, 49, 0.16);
+  border-radius: 8px;
+  background: #ffffff;
+  color: #183428;
+  cursor: pointer;
+  text-align: left;
+  display: grid;
+  align-content: end;
+  gap: 12px;
+}
+
+.home-card.primary {
+  border-color: rgba(23, 109, 242, 0.32);
+  background: #eff6ff;
+}
+
+.home-card.template {
+  border-color: rgba(22, 111, 78, 0.26);
+  background: #f0fbf5;
+}
+
+.home-card span {
+  color: #176df2;
+  font-size: 28px;
+  font-weight: 950;
+  line-height: 1.1;
+}
+
+.home-card strong {
+  max-width: 17em;
+  color: #365143;
+  font-size: 17px;
+  line-height: 1.45;
+}
+
+.home-secondary {
+  min-height: 52px;
+  padding-top: 6px;
+  border-top: 1px solid rgba(28, 72, 49, 0.12);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.home-secondary button {
+  min-height: 40px;
+  padding: 0 14px;
+  border: 1px solid rgba(23, 109, 242, 0.24);
+  border-radius: 8px;
+  background: #f4f8ff;
+  color: #176df2;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.home-secondary button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.home-secondary p {
+  margin: 0;
+  color: #587065;
+  font-size: 13px;
+  font-weight: 800;
+}
+
 .top-actions,
 .tool-rail {
   display: flex;
@@ -107,6 +209,11 @@ h1 {
   min-width: 92px;
   border-color: rgba(23, 109, 242, 0.24);
   color: #176df2;
+}
+
+.toggle.action.secondary {
+  min-width: 70px;
+  color: #4a6257;
 }
 
 .workspace {
@@ -881,6 +988,124 @@ h1 {
   pointer-events: none;
 }
 
+@media (min-width: 821px) and (max-height: 820px) {
+  .app-shell {
+    padding: 10px;
+  }
+
+  .editor-shell,
+  .template-shell {
+    min-height: calc(100vh - 20px);
+    gap: 10px;
+  }
+
+  .top-bar,
+  .template-header {
+    min-height: 58px;
+    padding: 10px 12px;
+  }
+
+  .top-bar h1,
+  .template-header h1 {
+    font-size: 22px;
+  }
+
+  .top-actions {
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 6px;
+  }
+
+  .toggle {
+    min-width: 58px;
+    min-height: 36px;
+  }
+
+  .toggle.action {
+    min-width: 66px;
+  }
+
+  .workspace {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .tool-rail {
+    min-height: auto;
+    display: grid;
+    grid-template-columns: repeat(8, minmax(0, 1fr));
+    align-items: stretch;
+    gap: 6px;
+    padding: 8px;
+  }
+
+  .tool-button {
+    min-width: 0;
+    min-height: 38px;
+    padding: 0 7px;
+    font-size: 13px;
+  }
+
+  .save-panel {
+    grid-column: span 4;
+    padding: 8px;
+  }
+
+  .step-panel {
+    grid-column: span 4;
+    margin-top: 0;
+    padding-top: 0;
+    border-top: 0;
+  }
+
+  .step-list {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+  }
+
+  .step-button {
+    min-height: 48px;
+    padding: 7px;
+  }
+
+  .step-note textarea {
+    min-height: 54px;
+    resize: none;
+  }
+
+  .playback-strip {
+    min-height: 58px;
+    padding: 8px 10px;
+  }
+
+  .playback-summary strong {
+    font-size: 16px;
+  }
+
+  .playback-summary p {
+    font-size: 13px;
+  }
+
+  .board-frame {
+    min-height: 0;
+    height: calc(100vh - 310px);
+  }
+
+  .template-workspace {
+    grid-template-columns: 260px minmax(0, 1fr);
+  }
+
+  .template-card {
+    min-height: 76px;
+    padding: 9px;
+  }
+
+  .template-preview-board .board-frame {
+    min-height: 0;
+    height: calc(100vh - 260px);
+  }
+}
+
 @media (max-width: 820px) {
   .app-shell {
     padding: 10px;
@@ -897,6 +1122,24 @@ h1 {
 
   .top-actions {
     flex-wrap: wrap;
+  }
+
+  .home-shell {
+    min-height: calc(100vh - 20px);
+    padding: 16px;
+  }
+
+  .home-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .home-card {
+    min-height: 150px;
+  }
+
+  .home-secondary {
+    align-items: flex-start;
+    flex-direction: column;
   }
 
   .workspace {

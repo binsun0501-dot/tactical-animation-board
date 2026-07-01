@@ -74,7 +74,7 @@ export default function App() {
   const [activeTool, setActiveTool] = useState("move");
   const [selectedPathId, setSelectedPathId] = useState(null);
   const [playback, setPlayback] = useState(IDLE_PLAYBACK);
-  const [appMode, setAppMode] = useState("edit");
+  const [appMode, setAppMode] = useState("home");
   const playbackRunIdRef = useRef(0);
 
   const activeStep = steps.find((step) => step.id === activeStepId) ?? steps[0];
@@ -95,6 +95,7 @@ export default function App() {
   const canAddStep = steps.length < 5;
   const canPlay = steps.length > 1;
   const editingDisabled = isPlaybackVisible;
+  const isHomeMode = appMode === "home";
   const isPresentationMode = appMode === "presentation";
   const isViewerMode = appMode === "viewer";
   const isTemplateLibraryMode = appMode === "templates";
@@ -467,6 +468,11 @@ export default function App() {
     setAppMode("edit");
   }
 
+  function returnToHomeMode() {
+    returnToEdit();
+    setAppMode("home");
+  }
+
   function enterViewerMode() {
     resetPlayback();
     setSelectedPathId(null);
@@ -479,6 +485,11 @@ export default function App() {
     setSelectedPathId(null);
     setActiveTool("move");
     setAppMode("templates");
+  }
+
+  function openRecentSavedTactic() {
+    loadRecentTactic();
+    setAppMode("edit");
   }
 
   function copyTemplateToTactic(template) {
@@ -498,6 +509,17 @@ export default function App() {
     setActiveStepId(nextStep.id);
     setSelectedPathId(null);
     setActiveTool("move");
+  }
+
+  if (isHomeMode) {
+    return (
+      <HomeMode
+        onOpenRecent={openRecentSavedTactic}
+        onOpenTemplates={enterTemplateLibrary}
+        onStartBoard={returnToEditMode}
+        savedSummary={savedSummary}
+      />
+    );
   }
 
   if (isPresentationMode) {
@@ -575,19 +597,22 @@ export default function App() {
             >
               全场
             </button>
+            <button className="toggle action secondary" type="button" onClick={returnToHomeMode}>
+              首页
+            </button>
             <button
               className="toggle action"
               type="button"
               data-testid="template-library-entry"
               onClick={enterTemplateLibrary}
             >
-              模板库
+              模板
             </button>
             <button className="toggle action" type="button" onClick={enterPresentationMode}>
-              展示模式
+              展示
             </button>
             <button className="toggle action" type="button" onClick={enterViewerMode}>
-              观看页
+              观看
             </button>
           </div>
         </header>
@@ -746,6 +771,47 @@ export default function App() {
               setBoardState={updateCurrentStepBoard}
             />
           </section>
+        </div>
+      </section>
+    </main>
+  );
+}
+
+function HomeMode({ onOpenRecent, onOpenTemplates, onStartBoard, savedSummary }) {
+  return (
+    <main className="app-shell home-app">
+      <section className="home-shell" aria-label="战术动画板首页">
+        <header className="home-header">
+          <p className="stage-label">战术动画板 v1 candidate</p>
+          <h1>先选一个入口</h1>
+        </header>
+
+        <div className="home-actions" aria-label="主要入口">
+          <button
+            className="home-card primary"
+            type="button"
+            data-testid="home-board-entry"
+            onClick={onStartBoard}
+          >
+            <span>现场白板</span>
+            <strong>直接摆队员、画路线、分步骤讲清楚。</strong>
+          </button>
+          <button
+            className="home-card template"
+            type="button"
+            data-testid="home-template-entry"
+            onClick={onOpenTemplates}
+          >
+            <span>基础模板</span>
+            <strong>从 8 个足球模板复制后修改。</strong>
+          </button>
+        </div>
+
+        <div className="home-secondary" aria-label="次级入口">
+          <button type="button" onClick={onOpenRecent} disabled={!savedSummary}>
+            打开最近保存
+          </button>
+          <p>{savedSummary ? savedSummary.title : "本机暂无已保存战术"}</p>
         </div>
       </section>
     </main>
