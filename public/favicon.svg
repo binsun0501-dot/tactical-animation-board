@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="战术动画板">
+  <rect width="64" height="64" rx="12" fill="#49a83d"/>
+  <path d="M10 32h44M32 8v48M10 16h12v32H10M42 16h12v32H42" fill="none" stroke="#f8fffa" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="24" cy="42" r="6" fill="#176df2" stroke="#ffffff" stroke-width="2"/>
+  <circle cx="43" cy="23" r="6" fill="#e24737" stroke="#ffffff" stroke-width="2"/>
+  <circle cx="36" cy="39" r="4" fill="#f8fbff" stroke="#142035" stroke-width="1.5"/>
+</svg>
