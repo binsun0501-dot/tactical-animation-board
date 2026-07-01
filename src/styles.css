@@ -543,6 +543,200 @@ h1 {
   padding: 0 8px;
 }
 
+.template-app {
+  background: #eef6f1;
+}
+
+.template-shell {
+  width: min(1360px, 100%);
+  min-height: calc(100vh - 36px);
+  margin: 0 auto;
+  display: grid;
+  grid-template-rows: auto 1fr;
+  gap: 14px;
+}
+
+.template-header {
+  min-height: 72px;
+  padding: 14px 18px;
+  border: 1px solid rgba(26, 66, 44, 0.12);
+  border-radius: 8px;
+  background: rgba(250, 255, 252, 0.94);
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 16px;
+}
+
+.template-workspace {
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 310px minmax(0, 1fr);
+  gap: 14px;
+}
+
+.template-list {
+  padding: 12px;
+  border: 1px solid rgba(26, 66, 44, 0.12);
+  border-radius: 8px;
+  background: rgba(250, 255, 252, 0.92);
+  display: grid;
+  align-content: start;
+  gap: 10px;
+}
+
+.template-card {
+  width: 100%;
+  min-height: 92px;
+  padding: 12px;
+  border: 1px solid rgba(28, 72, 49, 0.14);
+  border-radius: 8px;
+  background: #ffffff;
+  color: #263d31;
+  cursor: pointer;
+  text-align: left;
+}
+
+.template-card span,
+.template-card strong,
+.template-card small {
+  display: block;
+}
+
+.template-card span {
+  color: #17634a;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.template-card strong {
+  margin-top: 5px;
+  font-size: 16px;
+  line-height: 1.25;
+}
+
+.template-card small {
+  margin-top: 8px;
+  color: #65756a;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.template-card.active {
+  border-color: #176df2;
+  background: #f4f8ff;
+  box-shadow: 0 0 0 3px rgba(23, 109, 242, 0.12);
+}
+
+.template-detail {
+  min-width: 0;
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr) auto auto;
+  gap: 12px;
+}
+
+.template-detail-header {
+  padding: 14px 16px;
+  border: 1px solid rgba(26, 66, 44, 0.12);
+  border-radius: 8px;
+  background: rgba(250, 255, 252, 0.94);
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.template-detail-header h2 {
+  margin: 0;
+  color: #10271d;
+  font-size: 24px;
+  line-height: 1.2;
+  letter-spacing: 0;
+}
+
+.template-detail-header p:not(.stage-label) {
+  max-width: 680px;
+  margin: 7px 0 0;
+  color: #465b50;
+  font-size: 14px;
+  font-weight: 750;
+  line-height: 1.45;
+}
+
+.template-meta,
+.template-tags,
+.template-step-list,
+.template-detail-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.template-meta span,
+.template-tags span {
+  min-height: 32px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #17634a;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.template-tags span {
+  border: 1px solid rgba(28, 72, 49, 0.12);
+}
+
+.template-preview-board {
+  min-height: 0;
+}
+
+.template-preview-board .board-frame {
+  min-height: 0;
+  height: 100%;
+  padding: 10px;
+}
+
+.template-step-panel {
+  padding: 12px 14px;
+  border: 1px solid rgba(26, 66, 44, 0.12);
+  border-radius: 8px;
+  background: rgba(250, 255, 252, 0.94);
+  display: grid;
+  gap: 10px;
+}
+
+.template-step-button {
+  min-height: 36px;
+  padding: 0 12px;
+  border: 1px solid rgba(28, 72, 49, 0.14);
+  border-radius: 8px;
+  background: #ffffff;
+  color: #244535;
+  font-size: 13px;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.template-step-button.active {
+  border-color: #176df2;
+  background: #176df2;
+  color: #ffffff;
+}
+
+.template-step-panel p {
+  margin: 0;
+  color: #233b2f;
+  font-size: 16px;
+  font-weight: 850;
+  line-height: 1.45;
+}
+
+.template-detail-actions {
+  justify-content: flex-end;
+}
+
 .board-frame {
   width: 100%;
   min-height: 540px;
@@ -787,5 +981,30 @@ h1 {
 
   .viewer-controls .control-button.primary {
     grid-column: span 2;
+  }
+
+  .template-header {
+    grid-template-columns: 1fr;
+  }
+
+  .template-workspace {
+    grid-template-columns: 1fr;
+  }
+
+  .template-list {
+    grid-template-columns: 1fr;
+  }
+
+  .template-detail-header {
+    flex-direction: column;
+  }
+
+  .template-preview-board .board-frame {
+    min-height: 420px;
+    height: 55vh;
+  }
+
+  .template-detail-actions {
+    justify-content: stretch;
   }
 }

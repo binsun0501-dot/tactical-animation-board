@@ -6,6 +6,7 @@ import {
   createInitialBoardState,
   createInitialSteps,
 } from "./data/initialBoard.js";
+import { TACTIC_TEMPLATES } from "./data/templates.js";
 import {
   PLAYBACK_STEP_DURATION_MS,
   createBoardStateFromStep,
@@ -96,6 +97,7 @@ export default function App() {
   const editingDisabled = isPlaybackVisible;
   const isPresentationMode = appMode === "presentation";
   const isViewerMode = appMode === "viewer";
+  const isTemplateLibraryMode = appMode === "templates";
 
   useEffect(() => {
     if (playback.status !== "playing") {
@@ -472,6 +474,13 @@ export default function App() {
     setAppMode("viewer");
   }
 
+  function enterTemplateLibrary() {
+    resetPlayback();
+    setSelectedPathId(null);
+    setActiveTool("move");
+    setAppMode("templates");
+  }
+
   function goToStepByIndex(nextStepIndex) {
     const nextStep = steps[nextStepIndex];
     if (!nextStep) {
@@ -526,6 +535,16 @@ export default function App() {
     );
   }
 
+  if (isTemplateLibraryMode) {
+    return (
+      <TemplateLibraryMode
+        onCopyTemplate={null}
+        onReturnToEdit={returnToEditMode}
+        templates={TACTIC_TEMPLATES}
+      />
+    );
+  }
+
   return (
     <main className="app-shell">
       <section className="editor-shell" aria-label="现场白板编辑器">
@@ -548,6 +567,14 @@ export default function App() {
               onClick={() => setFieldView("full")}
             >
               全场
+            </button>
+            <button
+              className="toggle action"
+              type="button"
+              data-testid="template-library-entry"
+              onClick={enterTemplateLibrary}
+            >
+              模板库
             </button>
             <button className="toggle action" type="button" onClick={enterPresentationMode}>
               展示模式
@@ -711,6 +738,134 @@ export default function App() {
               setSelectedPathId={setSelectedPathId}
               setBoardState={updateCurrentStepBoard}
             />
+          </section>
+        </div>
+      </section>
+    </main>
+  );
+}
+
+function TemplateLibraryMode({ onCopyTemplate, onReturnToEdit, templates }) {
+  const [selectedTemplateId, setSelectedTemplateId] = useState(templates[0]?.id ?? "");
+  const [activePreviewStepId, setActivePreviewStepId] = useState(
+    templates[0]?.steps[0]?.id ?? "step_0",
+  );
+  const selectedTemplate =
+    templates.find((template) => template.id === selectedTemplateId) ?? templates[0];
+  const activePreviewStep =
+    selectedTemplate.steps.find((step) => step.id === activePreviewStepId) ??
+    selectedTemplate.steps[0];
+  const previewBoardState = createBoardStateFromStep(activePreviewStep);
+
+  function selectTemplate(template) {
+    setSelectedTemplateId(template.id);
+    setActivePreviewStepId(template.steps[0]?.id ?? "step_0");
+  }
+
+  return (
+    <main className="app-shell template-app">
+      <section
+        className="template-shell"
+        aria-label="基础足球模板库"
+        data-testid="template-library"
+      >
+        <header className="template-header">
+          <button className="control-button" type="button" onClick={onReturnToEdit}>
+            返回现场白板
+          </button>
+          <div>
+            <p className="stage-label">基础模板库</p>
+            <h1>8 个足球基础模板</h1>
+          </div>
+        </header>
+
+        <div className="template-workspace">
+          <aside className="template-list" aria-label="模板列表">
+            {templates.map((template) => {
+              const isSelected = template.id === selectedTemplate.id;
+
+              return (
+                <button
+                  key={template.id}
+                  className={isSelected ? "template-card active" : "template-card"}
+                  type="button"
+                  data-testid={`template-card-${template.id}`}
+                  onClick={() => selectTemplate(template)}
+                >
+                  <span>{template.category}</span>
+                  <strong>{template.name}</strong>
+                  <small>{template.difficulty} · {template.recommendedMode}</small>
+                </button>
+              );
+            })}
+          </aside>
+
+          <section className="template-detail" aria-label="模板详情">
+            <div className="template-detail-header">
+              <div>
+                <p className="stage-label">{selectedTemplate.category}</p>
+                <h2 data-testid="selected-template-name">{selectedTemplate.name}</h2>
+                <p>{selectedTemplate.description}</p>
+              </div>
+              <div className="template-meta">
+                <span>{selectedTemplate.field.format}</span>
+                <span>{selectedTemplate.difficulty}</span>
+                <span>{selectedTemplate.steps.length} 步</span>
+              </div>
+            </div>
+
+            <div className="template-tags" aria-label="模板标签">
+              {selectedTemplate.tags.map((tag) => (
+                <span key={tag}>{tag}</span>
+              ))}
+            </div>
+
+            <section className="template-preview-board" aria-label="模板预览球场">
+              <TacticBoard
+                activeTool="move"
+                boardState={previewBoardState}
+                fieldView={selectedTemplate.field.view}
+                readOnly
+                selectedPathId={null}
+                setSelectedPathId={() => {}}
+                setBoardState={() => {}}
+              />
+            </section>
+
+            <section className="template-step-panel" aria-label="模板步骤">
+              <div className="template-step-list">
+                {selectedTemplate.steps.map((step, index) => (
+                  <button
+                    key={step.id}
+                    className={
+                      step.id === activePreviewStep.id
+                        ? "template-step-button active"
+                        : "template-step-button"
+                    }
+                    type="button"
+                    onClick={() => setActivePreviewStepId(step.id)}
+                  >
+                    Step {index}
+                  </button>
+                ))}
+              </div>
+              <p>{activePreviewStep.note}</p>
+            </section>
+
+            <div className="template-detail-actions">
+              <button className="control-button" type="button" disabled>
+                播放模板
+              </button>
+              <button
+                className="control-button primary"
+                type="button"
+                data-testid="copy-template"
+                onClick={() => onCopyTemplate?.(selectedTemplate)}
+                disabled={!onCopyTemplate}
+              >
+                复制为我的战术
+              </button>
+            </div>
           </section>
         </div>
       </section>
