@@ -1,4 +1,5 @@
 import { downloadBlobFile } from "./downloadFile.js";
+import { FIELD_MODES, normalizeFieldView } from "./fieldModes.js";
 import { sanitizeTitleForFilename } from "./tacticPersistence.js";
 
 const IMAGE_WIDTH = 1400;
@@ -78,6 +79,9 @@ export function createCurrentStepImageSvg({
 }
 
 function renderField(fieldView) {
+  const normalizedFieldView = normalizeFieldView(fieldView);
+  const isFullField = normalizedFieldView === FIELD_MODES.FULL_FIELD;
+
   return `
     <defs>
       <marker id="run-export-arrow" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto" markerUnits="strokeWidth">
@@ -86,6 +90,9 @@ function renderField(fieldView) {
       <marker id="pass-export-arrow" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto" markerUnits="strokeWidth">
         <path d="M 0 0 L 6 3 L 0 6 Z" fill="#ffd234"/>
       </marker>
+      <marker id="attack-export-arrow" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto" markerUnits="strokeWidth">
+        <path d="M 0 0 L 6 3 L 0 6 Z" fill="#ffffff"/>
+      </marker>
     </defs>
     <rect width="100" height="64" rx="1.8" fill="#59b547"/>
     <g opacity="0.18">
@@ -93,24 +100,32 @@ function renderField(fieldView) {
     </g>
     <g fill="none" stroke="rgba(255,255,255,0.88)" stroke-width="0.55">
       <rect x="1" y="1" width="98" height="62" rx="1.6"/>
-      <line x1="50" y1="1" x2="50" y2="63"/>
-      <circle cx="50" cy="32" r="9.5"/>
-      <circle cx="50" cy="32" r="0.8"/>
-      <rect x="1" y="17" width="17" height="30"/>
-      <rect x="1" y="24" width="7.8" height="16"/>
-      <circle cx="12.2" cy="32" r="0.7"/>
       ${
-        fieldView === "full"
-          ? `<rect x="82" y="17" width="17" height="30"/>
+        isFullField
+          ? `<line x1="50" y1="1" x2="50" y2="63"/>
+             <circle cx="50" cy="32" r="9.5"/>
+             <circle cx="50" cy="32" r="0.8"/>
+             <rect x="1" y="17" width="17" height="30"/>
+             <rect x="1" y="24" width="7.8" height="16"/>
+             <circle cx="12.2" cy="32" r="0.7"/>
+             <rect x="82" y="17" width="17" height="30"/>
              <rect x="91.2" y="24" width="7.8" height="16"/>
-             <circle cx="87.8" cy="32" r="0.7"/>`
-          : `<path d="M 98 22 L 98 42"/>`
+             <circle cx="87.8" cy="32" r="0.7"/>
+             <path d="M 1 24 L 1 40"/>
+             <path d="M 99 24 L 99 40"/>`
+          : `<line x1="9" y1="5" x2="9" y2="59" stroke-dasharray="1.2 1.4" opacity="0.46"/>
+             <rect x="70" y="13" width="29" height="38"/>
+             <rect x="88" y="23" width="11" height="18"/>
+             <circle cx="81" cy="32" r="0.7"/>
+             <path d="M 98.6 22 L 98.6 42"/>
+             <line x1="58" y1="7" x2="90" y2="7" stroke-width="0.75" marker-end="url(#attack-export-arrow)"/>`
       }
     </g>
     ${
-      fieldView === "full"
+      isFullField
         ? ""
-        : `<text x="96" y="7" text-anchor="end" fill="rgba(255,255,255,0.78)" font-family="PingFang SC, Microsoft YaHei, sans-serif" font-size="2.8" font-weight="800">半场快速讲解</text>`
+        : `<text x="57" y="7.9" text-anchor="end" fill="rgba(255,255,255,0.78)" font-family="PingFang SC, Microsoft YaHei, sans-serif" font-size="2.8" font-weight="800">进攻方向</text>
+           <text x="96" y="15" text-anchor="end" fill="rgba(255,255,255,0.78)" font-family="PingFang SC, Microsoft YaHei, sans-serif" font-size="2.8" font-weight="800">目标球门</text>`
     }`;
 }
 

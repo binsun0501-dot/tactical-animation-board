@@ -1,8 +1,10 @@
+import { FIELD_MODES, normalizeFieldView } from "./fieldModes.js";
+
 export const TACTIC_SCHEMA_VERSION = "v1";
 export const LOCAL_TACTIC_STORAGE_KEY = "tactical-animation-board:my-tactic";
 
 const DEFAULT_TITLE = "我的战术";
-const DEFAULT_FIELD_VIEW = "half";
+const DEFAULT_FIELD_VIEW = FIELD_MODES.ATTACKING_HALF;
 
 export function createNewTacticMeta() {
   const now = new Date().toISOString();
@@ -45,7 +47,7 @@ export function createTacticDocument({ steps, activeStepId, fieldView, tacticMet
         id: "field_football_v1",
         type: "football",
         format: "free",
-        view: fieldView || DEFAULT_FIELD_VIEW,
+        view: normalizeFieldView(fieldView || DEFAULT_FIELD_VIEW),
         orientation: "landscape",
         size: {
           width: 100,
@@ -78,7 +80,7 @@ export function createTacticDocument({ steps, activeStepId, fieldView, tacticMet
       annotations: [],
       settings: {
         currentStepId: activeStepId,
-        fieldView: fieldView || DEFAULT_FIELD_VIEW,
+        fieldView: normalizeFieldView(fieldView || DEFAULT_FIELD_VIEW),
       },
     },
   };
@@ -117,7 +119,9 @@ export function documentToAppState(document) {
 
   const requestedStepId = tactic.settings?.currentStepId || tactic.currentStepId || steps[0].id;
   const activeStepId = steps.some((step) => step.id === requestedStepId) ? requestedStepId : steps[0].id;
-  const fieldView = tactic.settings?.fieldView || tactic.field?.view || DEFAULT_FIELD_VIEW;
+  const fieldView = normalizeFieldView(
+    tactic.settings?.fieldView || tactic.field?.view || DEFAULT_FIELD_VIEW,
+  );
 
   return {
     steps,

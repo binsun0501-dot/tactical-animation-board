@@ -1,4 +1,5 @@
 import React, { useRef, useState } from "react";
+import { FIELD_MODES, normalizeFieldView } from "../utils/fieldModes.js";
 
 const BOARD_WIDTH = 100;
 const BOARD_HEIGHT = 64;
@@ -19,6 +20,7 @@ export function TacticBoard({
   const svgRef = useRef(null);
   const [dragTarget, setDragTarget] = useState(null);
   const [draftPath, setDraftPath] = useState(null);
+  const normalizedFieldView = normalizeFieldView(fieldView);
 
   function pointFromEvent(event) {
     const rect = svgRef.current.getBoundingClientRect();
@@ -117,7 +119,7 @@ export function TacticBoard({
   return (
     <div
       className={readOnly ? "board-frame read-only" : "board-frame"}
-      data-field-view={fieldView}
+      data-field-view={normalizedFieldView}
     >
       <svg
         ref={svgRef}
@@ -153,8 +155,19 @@ export function TacticBoard({
           >
             <path d="M 0 0 L 6 3 L 0 6 Z" className="pass-arrow-head" />
           </marker>
+          <marker
+            id="attack-direction-arrow"
+            markerWidth="6"
+            markerHeight="6"
+            refX="5"
+            refY="3"
+            orient="auto"
+            markerUnits="strokeWidth"
+          >
+            <path d="M 0 0 L 6 3 L 0 6 Z" className="attack-direction-head" />
+          </marker>
         </defs>
-        <FieldMarkings fieldView={fieldView} />
+        <FieldMarkings fieldView={normalizedFieldView} />
         <PathLayer
           draftPath={draftPath}
           paths={boardState.paths}
@@ -249,28 +262,46 @@ function PathLayer({ draftPath, paths, readOnly, selectedPathId, setSelectedPath
 }
 
 function FieldMarkings({ fieldView }) {
+  const isFullField = fieldView === FIELD_MODES.FULL_FIELD;
+
   return (
     <g className="field-lines">
       <rect x="1" y="1" width="98" height="62" rx="1.6" />
-      <line x1="50" y1="1" x2="50" y2="63" />
-      <circle cx="50" cy="32" r="9.5" />
-      <circle cx="50" cy="32" r="0.8" />
 
-      <rect x="1" y="17" width="17" height="30" />
-      <rect x="1" y="24" width="7.8" height="16" />
-      <circle cx="12.2" cy="32" r="0.7" />
-
-      {fieldView === "full" ? (
+      {isFullField ? (
         <>
+          <line x1="50" y1="1" x2="50" y2="63" />
+          <circle cx="50" cy="32" r="9.5" />
+          <circle cx="50" cy="32" r="0.8" />
+          <rect x="1" y="17" width="17" height="30" />
+          <rect x="1" y="24" width="7.8" height="16" />
+          <circle cx="12.2" cy="32" r="0.7" />
           <rect x="82" y="17" width="17" height="30" />
           <rect x="91.2" y="24" width="7.8" height="16" />
           <circle cx="87.8" cy="32" r="0.7" />
+          <path d="M 1 24 L 1 40" />
+          <path d="M 99 24 L 99 40" />
         </>
       ) : (
         <>
-          <path d="M 98 22 L 98 42" />
-          <text className="field-note" x="96" y="7" textAnchor="end">
-            半场快速讲解
+          <line className="field-guide" x1="9" y1="5" x2="9" y2="59" />
+          <rect x="70" y="13" width="29" height="38" />
+          <rect x="88" y="23" width="11" height="18" />
+          <circle cx="81" cy="32" r="0.7" />
+          <path d="M 98.6 22 L 98.6 42" />
+          <line
+            className="attack-direction-line"
+            x1="58"
+            y1="7"
+            x2="90"
+            y2="7"
+            markerEnd="url(#attack-direction-arrow)"
+          />
+          <text className="field-note" x="57" y="7.9" textAnchor="end">
+            进攻方向
+          </text>
+          <text className="field-note" x="96" y="15" textAnchor="end">
+            目标球门
           </text>
         </>
       )}

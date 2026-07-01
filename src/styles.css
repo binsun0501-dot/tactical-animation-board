@@ -912,6 +912,21 @@ h1 {
   font-weight: 800;
 }
 
+.field-guide {
+  stroke-dasharray: 1.2 1.4;
+  opacity: 0.46;
+}
+
+.attack-direction-line {
+  stroke: #ffffff;
+  stroke-width: 0.75;
+  opacity: 0.9;
+}
+
+.attack-direction-head {
+  fill: #ffffff;
+}
+
 .path-layer {
   pointer-events: stroke;
 }

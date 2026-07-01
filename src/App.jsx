@@ -14,6 +14,7 @@ import {
 } from "./utils/playback.js";
 import { downloadTextFile } from "./utils/downloadFile.js";
 import { exportCurrentStepImagePng } from "./utils/stepImageExport.js";
+import { FIELD_MODES, normalizeFieldView } from "./utils/fieldModes.js";
 import {
   createNewTacticMeta,
   createTacticDocument,
@@ -48,7 +49,7 @@ function createInitialAppState() {
     return {
       steps: defaultSteps,
       activeStepId: "step_0",
-      fieldView: "half",
+      fieldView: FIELD_MODES.ATTACKING_HALF,
       tacticMeta: defaultMeta,
       loadMessage: "最近保存无法打开，已使用默认战术板",
     };
@@ -57,7 +58,7 @@ function createInitialAppState() {
   return {
     steps: defaultSteps,
     activeStepId: "step_0",
-    fieldView: "half",
+    fieldView: FIELD_MODES.ATTACKING_HALF,
     tacticMeta: defaultMeta,
     loadMessage: "",
   };
@@ -412,7 +413,7 @@ export default function App() {
     resetPlayback();
     setSteps(appState.steps);
     setActiveStepId(appState.activeStepId);
-    setFieldView(appState.fieldView);
+    setFieldView(normalizeFieldView(appState.fieldView));
     setTacticMeta(appState.tacticMeta);
     setActiveTool("move");
     setSelectedPathId(null);
@@ -726,16 +727,24 @@ export default function App() {
           </div>
           <div className="top-actions" aria-label="球场视图">
             <button
-              className={fieldView === "half" ? "toggle active" : "toggle"}
+              className={
+                normalizeFieldView(fieldView) === FIELD_MODES.ATTACKING_HALF
+                  ? "toggle active"
+                  : "toggle"
+              }
               type="button"
-              onClick={() => setFieldView("half")}
+              onClick={() => setFieldView(FIELD_MODES.ATTACKING_HALF)}
             >
-              半场
+              进攻半场
             </button>
             <button
-              className={fieldView === "full" ? "toggle active" : "toggle"}
+              className={
+                normalizeFieldView(fieldView) === FIELD_MODES.FULL_FIELD
+                  ? "toggle active"
+                  : "toggle"
+              }
               type="button"
-              onClick={() => setFieldView("full")}
+              onClick={() => setFieldView(FIELD_MODES.FULL_FIELD)}
             >
               全场
             </button>
