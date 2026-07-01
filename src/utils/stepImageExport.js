@@ -84,11 +84,11 @@ function renderField(fieldView) {
 
   return `
     <defs>
-      <marker id="run-export-arrow" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto" markerUnits="strokeWidth">
-        <path d="M 0 0 L 6 3 L 0 6 Z" fill="#166fff"/>
+      <marker id="run-export-arrow" markerWidth="3.8" markerHeight="3.8" refX="3.4" refY="1.9" orient="auto" markerUnits="strokeWidth">
+        <path d="M 0 0 L 3.8 1.9 L 0 3.8 Z" fill="#166fff"/>
       </marker>
-      <marker id="pass-export-arrow" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto" markerUnits="strokeWidth">
-        <path d="M 0 0 L 6 3 L 0 6 Z" fill="#ffd234"/>
+      <marker id="pass-export-arrow" markerWidth="3.8" markerHeight="3.8" refX="3.4" refY="1.9" orient="auto" markerUnits="strokeWidth">
+        <path d="M 0 0 L 3.8 1.9 L 0 3.8 Z" fill="#ffd234"/>
       </marker>
       <marker id="attack-export-arrow" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto" markerUnits="strokeWidth">
         <path d="M 0 0 L 6 3 L 0 6 Z" fill="#ffffff"/>
@@ -137,7 +137,7 @@ function renderPaths(paths = []) {
       const marker = isPass ? "pass-export-arrow" : "run-export-arrow";
       const dash = isPass ? "" : `stroke-dasharray="2.1 1.4"`;
 
-      return `<line x1="${path.from.x}" y1="${path.from.y}" x2="${path.to.x}" y2="${path.to.y}" fill="none" stroke="${stroke}" stroke-width="1.15" stroke-linecap="round" ${dash} marker-end="url(#${marker})"/>`;
+      return `<line x1="${path.from.x}" y1="${path.from.y}" x2="${path.to.x}" y2="${path.to.y}" fill="none" stroke="${stroke}" stroke-width="1" stroke-linecap="round" ${dash} marker-end="url(#${marker})"/>`;
     })
     .join("");
 }

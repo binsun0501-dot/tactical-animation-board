@@ -216,25 +216,25 @@ export function TacticBoard({
         <defs>
           <marker
             id="run-arrow"
-            markerWidth="6"
-            markerHeight="6"
-            refX="5"
-            refY="3"
+            markerWidth="3.8"
+            markerHeight="3.8"
+            refX="3.4"
+            refY="1.9"
             orient="auto"
             markerUnits="strokeWidth"
           >
-            <path d="M 0 0 L 6 3 L 0 6 Z" className="run-arrow-head" />
+            <path d="M 0 0 L 3.8 1.9 L 0 3.8 Z" className="run-arrow-head" />
           </marker>
           <marker
             id="pass-arrow"
-            markerWidth="6"
-            markerHeight="6"
-            refX="5"
-            refY="3"
+            markerWidth="3.8"
+            markerHeight="3.8"
+            refX="3.4"
+            refY="1.9"
             orient="auto"
             markerUnits="strokeWidth"
           >
-            <path d="M 0 0 L 6 3 L 0 6 Z" className="pass-arrow-head" />
+            <path d="M 0 0 L 3.8 1.9 L 0 3.8 Z" className="pass-arrow-head" />
           </marker>
           <marker
             id="attack-direction-arrow"
