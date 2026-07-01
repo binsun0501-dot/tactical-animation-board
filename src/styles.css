@@ -512,6 +512,50 @@ h1 {
   font-weight: 800;
 }
 
+.experiment-panel {
+  border-top: 1px solid rgba(28, 72, 49, 0.12);
+  padding-top: 4px;
+  color: #365143;
+}
+
+.experiment-panel summary {
+  min-height: 40px;
+  display: flex;
+  align-items: center;
+  color: #17634a;
+  font-size: 14px;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.experiment-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.experiment-grid section {
+  padding: 12px;
+  border: 1px solid rgba(28, 72, 49, 0.1);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.experiment-grid h2 {
+  margin: 0 0 6px;
+  color: #153427;
+  font-size: 14px;
+  line-height: 1.2;
+}
+
+.experiment-grid p {
+  margin: 0;
+  color: #587065;
+  font-size: 12px;
+  font-weight: 750;
+  line-height: 1.55;
+}
+
 .top-actions,
 .tool-rail {
   display: flex;
@@ -1525,6 +1569,10 @@ h1 {
   .home-secondary {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .experiment-grid {
+    grid-template-columns: 1fr;
   }
 
   .workspace {

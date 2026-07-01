@@ -1283,7 +1283,7 @@ function HomeMode({ onOpenRecent, onOpenTemplates, onStartBoard, savedSummary })
     <main className="app-shell home-app">
       <section className="home-shell" aria-label="战术动画板首页">
         <header className="home-header">
-          <p className="stage-label">战术动画板 v1 candidate</p>
+          <p className="stage-label">公网实验版 v0.1.0-alpha</p>
           <h1>先选一个入口</h1>
         </header>
 
@@ -1314,6 +1314,45 @@ function HomeMode({ onOpenRecent, onOpenTemplates, onStartBoard, savedSummary })
           </button>
           <p>{savedSummary ? savedSummary.title : "本机暂无已保存战术"}</p>
         </div>
+
+        <details className="experiment-panel">
+          <summary>实验版说明</summary>
+          <div className="experiment-grid">
+            <section>
+              <h2>能做</h2>
+              <p>
+                摆放本方和对方队员、拖动足球、画跑动线和球路线、撤销路线、
+                分步骤记录、播放步骤、保存到本机、JSON 导入导出、当前步骤图片导出、
+                使用示例模板演示。
+              </p>
+            </section>
+            <section>
+              <h2>不能做</h2>
+              <p>
+                不是正式版；没有账号、云同步、多人协作、后台数据库、真实教练专业模板库、
+                App Store、TestFlight、GIF/MP4、AI 自动生成、3D、篮球或多运动。
+              </p>
+            </section>
+            <section>
+              <h2>测试目标</h2>
+              <p>重点看三件事：流畅、简单操作、简单理解。建议 iPad 横屏现场使用。</p>
+            </section>
+            <section>
+              <h2>添加到主屏幕</h2>
+              <p>
+                用 iPad Safari 打开公网链接，点分享按钮，选择“添加到主屏幕”。
+                浏览器顶部栏会占空间，主屏幕打开后显示面积更接近正式使用。
+              </p>
+            </section>
+            <section>
+              <h2>反馈方式</h2>
+              <p>
+                试用后把文字、截图、语音或现场感受直接发给项目联系人。优先反馈：
+                哪里卡、哪里不会用、队员哪里看不懂。
+              </p>
+            </section>
+          </div>
+        </details>
       </section>
     </main>
   );
