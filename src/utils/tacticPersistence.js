@@ -69,6 +69,7 @@ export function createTacticDocument({ steps, activeStepId, fieldView, tacticMet
       },
       players: initialStep?.state.players ?? [],
       opponents: initialStep?.state.opponents ?? [],
+      equipment: initialStep?.state.equipment ?? [],
       ball: initialStep?.state.ball ?? null,
       paths: normalizedSteps.flatMap((step) =>
         step.paths.map((path) => ({
@@ -202,6 +203,7 @@ function cloneBoardState(state = {}) {
   return {
     players: Array.isArray(state.players) ? state.players.map(clonePiece) : [],
     opponents: Array.isArray(state.opponents) ? state.opponents.map(clonePiece) : [],
+    equipment: Array.isArray(state.equipment) ? state.equipment.map(cloneEquipment) : [],
     ball: cloneBall(state.ball),
   };
 }
@@ -219,10 +221,26 @@ function clonePiece(piece) {
 }
 
 function cloneBall(ball) {
+  if (!ball) {
+    return null;
+  }
+
   return {
     ...ball,
-    id: String(ball?.id || "ball"),
-    position: clonePosition(ball?.position ?? ball),
+    id: String(ball.id || "ball"),
+    position: clonePosition(ball.position ?? ball),
+  };
+}
+
+function cloneEquipment(item) {
+  const position = clonePosition(item.position ?? item);
+
+  return {
+    ...item,
+    id: String(item.id),
+    type: item.type || "marker",
+    label: String(item.label || "标志桶"),
+    position,
   };
 }
 
@@ -254,6 +272,7 @@ function normalizeBoardStateForApp(state = {}, tactic = {}) {
   return {
     players: normalizePiecesForApp(state.players ?? tactic.players, "home"),
     opponents: normalizePiecesForApp(state.opponents ?? tactic.opponents, "away"),
+    equipment: normalizeEquipmentForApp(state.equipment ?? tactic.equipment),
     ball: cloneBall(state.ball ?? tactic.ball),
   };
 }
@@ -271,6 +290,14 @@ function normalizePiecesForApp(pieces, fallbackTeam) {
       team: piece.team || fallbackTeam,
     }),
   );
+}
+
+function normalizeEquipmentForApp(equipment) {
+  if (!Array.isArray(equipment)) {
+    return [];
+  }
+
+  return equipment.map(cloneEquipment);
 }
 
 function normalizePathForApp(path) {

@@ -20,6 +20,7 @@ export function createInitialBoardState() {
       position: { x: 60, y: 43 },
       ownerPlayerId: "p6",
     },
+    equipment: [],
     paths: [],
   };
 }
@@ -44,6 +45,7 @@ export function cloneBoardState(boardState) {
   return {
     players: clonePieces(boardState.players),
     opponents: clonePieces(boardState.opponents),
+    equipment: clonePieces(boardState.equipment ?? []),
     ball: boardState.ball
       ? {
           ...boardState.ball,

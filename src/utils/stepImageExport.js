@@ -67,6 +67,7 @@ export function createCurrentStepImageSvg({
   <g transform="translate(0 ${BOARD_Y})">
     ${renderField(fieldView)}
     ${renderPaths(boardState.paths)}
+    ${renderEquipment(boardState.equipment)}
     ${renderPieces(boardState.players, "home")}
     ${renderPieces(boardState.opponents, "away")}
     ${boardState.ball ? renderBall(boardState.ball) : ""}
@@ -152,6 +153,20 @@ function renderPieces(pieces = [], kind) {
       return `<g transform="translate(${position.x} ${position.y})">
         <circle r="3.1" fill="${fill}" stroke="rgba(255,255,255,0.9)" stroke-width="0.45"/>
         <text y="1.2" text-anchor="middle" fill="#ffffff" font-family="PingFang SC, Microsoft YaHei, sans-serif" font-size="3.7" font-weight="900">${escapeXml(piece.number)}</text>
+      </g>`;
+    })
+    .join("");
+}
+
+function renderEquipment(equipment = []) {
+  return equipment
+    .map((item) => {
+      const position = item.position ?? { x: 50, y: 32 };
+      const label = escapeXml(item.label || "标志桶");
+
+      return `<g transform="translate(${position.x} ${position.y})">
+        <rect x="-2.3" y="-2.3" width="4.6" height="4.6" rx="0.7" fill="#ff9f1c" stroke="rgba(255,255,255,0.92)" stroke-width="0.45"/>
+        <text y="0.9" text-anchor="middle" fill="#ffffff" font-family="PingFang SC, Microsoft YaHei, sans-serif" font-size="2" font-weight="900">${label.slice(0, 1)}</text>
       </g>`;
     })
     .join("");

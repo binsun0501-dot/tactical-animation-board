@@ -5,11 +5,16 @@ const BOARD_WIDTH = 100;
 const BOARD_HEIGHT = 64;
 const PIECE_RADIUS = 3.1;
 const BALL_RADIUS = 2.1;
+const TAP_MOVE_DISTANCE = 1.2;
+const DRAW_START_DISTANCE = 2.4;
 
 export function TacticBoard({
   activeTool,
   boardState,
   fieldView,
+  onBlankPoint = () => {},
+  onPathComplete = () => {},
+  onPieceTap = () => {},
   readOnly = false,
   selectedPathId,
   selectedPiece = null,
@@ -19,6 +24,7 @@ export function TacticBoard({
 }) {
   const svgRef = useRef(null);
   const [dragTarget, setDragTarget] = useState(null);
+  const [blankGesture, setBlankGesture] = useState(null);
   const [draftPath, setDraftPath] = useState(null);
   const normalizedFieldView = normalizeFieldView(fieldView);
 
@@ -39,10 +45,18 @@ export function TacticBoard({
     }
 
     event.preventDefault();
+    event.stopPropagation();
+    const startPoint = pointFromEvent(event);
     setSelectedPathId(null);
     setSelectedPiece({ type: target.type, id: target.id });
     event.currentTarget.setPointerCapture(event.pointerId);
-    setDragTarget({ ...target, pointerId: event.pointerId });
+    setDragTarget({
+      ...target,
+      pointerId: event.pointerId,
+      startPoint,
+      currentPoint: startPoint,
+      moved: false,
+    });
   }
 
   function startDraw(event) {
@@ -50,15 +64,23 @@ export function TacticBoard({
       return;
     }
 
+    const point = pointFromEvent(event);
+
     if (activeTool !== "run" && activeTool !== "pass") {
+      event.preventDefault();
+      event.currentTarget.setPointerCapture(event.pointerId);
       setSelectedPathId(null);
       setSelectedPiece(null);
+      setBlankGesture({
+        pointerId: event.pointerId,
+        start: point,
+        current: point,
+      });
       return;
     }
 
     event.preventDefault();
     event.currentTarget.setPointerCapture(event.pointerId);
-    const point = pointFromEvent(event);
     setDraftPath({
       id: `path_${activeTool}_${Date.now()}`,
       type: activeTool,
@@ -82,12 +104,46 @@ export function TacticBoard({
       return;
     }
 
+    if (blankGesture?.pointerId === event.pointerId) {
+      const point = pointFromEvent(event);
+      const distance = getDistance(blankGesture.start, point);
+
+      if (distance > DRAW_START_DISTANCE) {
+        setDraftPath({
+          id: `path_run_${Date.now()}`,
+          type: "run",
+          from: blankGesture.start,
+          to: point,
+          points: [blankGesture.start, point],
+          pointerId: event.pointerId,
+        });
+        setBlankGesture(null);
+        return;
+      }
+
+      setBlankGesture((current) =>
+        current ? { ...current, current: point } : current,
+      );
+      return;
+    }
+
     if (!dragTarget) {
       return;
     }
 
     const position = pointFromEvent(event);
     setBoardState((current) => moveBoardItem(current, dragTarget, position));
+    setDragTarget((current) =>
+      current
+        ? {
+            ...current,
+            currentPoint: position,
+            moved:
+              current.moved ||
+              getDistance(current.startPoint, position) > TAP_MOVE_DISTANCE,
+          }
+        : current,
+    );
   }
 
   function endDrag(event) {
@@ -108,10 +164,27 @@ export function TacticBoard({
         setSelectedPathId(path.id);
       }
       setDraftPath(null);
+      onPathComplete();
+      return;
+    }
+
+    if (blankGesture?.pointerId === event.pointerId) {
+      const distance = getDistance(blankGesture.start, blankGesture.current);
+      if (distance <= TAP_MOVE_DISTANCE) {
+        onBlankPoint(blankGesture.start);
+      }
+      setBlankGesture(null);
       return;
     }
 
     if (dragTarget?.pointerId === event.pointerId) {
+      if (!dragTarget.moved) {
+        onPieceTap({
+          type: dragTarget.type,
+          id: dragTarget.id,
+          point: dragTarget.currentPoint ?? dragTarget.startPoint,
+        });
+      }
       setDragTarget(null);
     }
   }
@@ -209,6 +282,17 @@ export function TacticBoard({
             }
           />
         ) : null}
+
+        {(boardState.equipment ?? []).map((item) => (
+          <EquipmentMarker
+            key={item.id}
+            item={item}
+            selected={isSelectedPiece(selectedPiece, "marker", item.id)}
+            onPointerDown={(event) =>
+              startDrag(event, { type: "marker", id: item.id })
+            }
+          />
+        ))}
       </svg>
     </div>
   );
@@ -343,6 +427,22 @@ function BallPiece({ ball, onPointerDown, selected }) {
   );
 }
 
+function EquipmentMarker({ item, onPointerDown, selected }) {
+  return (
+    <g
+      className={selected ? "equipment-marker selected-piece" : "equipment-marker"}
+      transform={`translate(${item.position.x} ${item.position.y})`}
+      onPointerDown={onPointerDown}
+      tabIndex="0"
+      role="button"
+      aria-label={item.label || "标志桶"}
+    >
+      <rect x="-2.4" y="-2.4" width="4.8" height="4.8" rx="0.7" />
+      <text y="0.9">{(item.label || "标志桶").slice(0, 1)}</text>
+    </g>
+  );
+}
+
 function isSelectedPiece(selectedPiece, type, id) {
   return selectedPiece?.type === type && selectedPiece.id === id;
 }
@@ -373,6 +473,15 @@ function moveBoardItem(current, target, position) {
         ...current.ball,
         position,
       },
+    };
+  }
+
+  if (target.type === "marker") {
+    return {
+      ...current,
+      equipment: (current.equipment ?? []).map((item) =>
+        item.id === target.id ? { ...item, position } : item,
+      ),
     };
   }
 

@@ -75,6 +75,8 @@ export default function App() {
   const [activeTool, setActiveTool] = useState("move");
   const [selectedPathId, setSelectedPathId] = useState(null);
   const [selectedPiece, setSelectedPiece] = useState(null);
+  const [boardMenu, setBoardMenu] = useState(null);
+  const [openPanel, setOpenPanel] = useState(null);
   const [playback, setPlayback] = useState(IDLE_PLAYBACK);
   const [appMode, setAppMode] = useState("home");
   const playbackRunIdRef = useRef(0);
@@ -100,6 +102,8 @@ export default function App() {
   );
   const canAddStep = steps.length < 5;
   const canDeleteCurrentStep = activeStepIndex > 0 && steps.length > 1;
+  const canGoPreviousStep = activeStepIndex > 0;
+  const canGoNextStep = activeStepIndex < steps.length - 1;
   const canPlay = steps.length > 1;
   const editingDisabled = isPlaybackVisible;
   const isHomeMode = appMode === "home";
@@ -170,9 +174,20 @@ export default function App() {
     setPlayback(IDLE_PLAYBACK);
   }
 
+  function closeFloatingUi() {
+    setBoardMenu(null);
+    setOpenPanel(null);
+  }
+
+  function togglePanel(panelName) {
+    setBoardMenu(null);
+    setOpenPanel((currentPanel) => (currentPanel === panelName ? null : panelName));
+  }
+
   function restoreDefaultLayout() {
     updateCurrentStepBoard(() => createInitialBoardState());
     setSelectedPiece(null);
+    setBoardMenu(null);
   }
 
   function clearBoard() {
@@ -184,10 +199,12 @@ export default function App() {
     updateCurrentStepBoard(() => ({
       players: [],
       opponents: [],
+      equipment: [],
       ball: null,
       paths: [],
     }));
     setSelectedPiece(null);
+    setBoardMenu(null);
   }
 
   function clearPaths() {
@@ -196,6 +213,7 @@ export default function App() {
       paths: [],
     }));
     setSelectedPathId(null);
+    setBoardMenu(null);
   }
 
   function undoLatestPath() {
@@ -204,6 +222,7 @@ export default function App() {
       paths: current.paths.slice(0, -1),
     }));
     setSelectedPathId(null);
+    setBoardMenu(null);
   }
 
   function deleteSelectedPath() {
@@ -216,13 +235,14 @@ export default function App() {
       paths: current.paths.filter((path) => path.id !== selectedPathId),
     }));
     setSelectedPathId(null);
+    setBoardMenu(null);
   }
 
-  function addHomePlayer() {
+  function addHomePlayer(position = null) {
     const nextPiece = {
       id: `player_${Date.now()}`,
       number: getNextPieceNumber(boardState.players),
-      position: getNewPiecePosition("home", boardState.players.length),
+      position: position ?? getNewPiecePosition("home", boardState.players.length),
     };
 
     updateCurrentStepBoard((current) => {
@@ -234,13 +254,14 @@ export default function App() {
     setSelectedPiece({ type: "player", id: nextPiece.id });
     setActiveTool("move");
     setSelectedPathId(null);
+    setBoardMenu(null);
   }
 
-  function addOpponentPlayer() {
+  function addOpponentPlayer(position = null) {
     const nextPiece = {
       id: `opponent_${Date.now()}`,
       number: getNextPieceNumber(boardState.opponents),
-      position: getNewPiecePosition("away", boardState.opponents.length),
+      position: position ?? getNewPiecePosition("away", boardState.opponents.length),
     };
 
     updateCurrentStepBoard((current) => {
@@ -252,12 +273,13 @@ export default function App() {
     setSelectedPiece({ type: "opponent", id: nextPiece.id });
     setActiveTool("move");
     setSelectedPathId(null);
+    setBoardMenu(null);
   }
 
-  function restoreFootball() {
+  function restoreFootball(position = null) {
     const ball = {
       id: boardState.ball?.id ?? "ball",
-      position: { x: 48, y: 32 },
+      position: position ?? { x: 48, y: 32 },
     };
 
     updateCurrentStepBoard((current) => {
@@ -269,6 +291,25 @@ export default function App() {
     setSelectedPiece({ type: "ball", id: ball.id });
     setActiveTool("move");
     setSelectedPathId(null);
+    setBoardMenu(null);
+  }
+
+  function addTrainingMarker(position) {
+    const marker = {
+      id: `marker_${Date.now()}`,
+      type: "marker",
+      label: "标志桶",
+      position,
+    };
+
+    updateCurrentStepBoard((current) => ({
+      ...current,
+      equipment: [...(current.equipment ?? []), marker],
+    }));
+    setSelectedPiece({ type: "marker", id: marker.id });
+    setActiveTool("move");
+    setSelectedPathId(null);
+    setBoardMenu(null);
   }
 
   function deleteSelectedPiece() {
@@ -303,9 +344,71 @@ export default function App() {
         };
       }
 
+      if (selectedPiece.type === "marker") {
+        return {
+          ...current,
+          equipment: (current.equipment ?? []).filter(
+            (item) => item.id !== selectedPiece.id,
+          ),
+        };
+      }
+
       return current;
     });
     setSelectedPiece(null);
+    setBoardMenu(null);
+  }
+
+  function handleBlankBoardPoint(point) {
+    if (editingDisabled) {
+      return;
+    }
+
+    if (boardMenu || openPanel) {
+      closeFloatingUi();
+      setSelectedPiece(null);
+      setSelectedPathId(null);
+      return;
+    }
+
+    setSelectedPiece(null);
+    setSelectedPathId(null);
+    setBoardMenu({ type: "add", point });
+  }
+
+  function handlePieceTap(target) {
+    if (editingDisabled) {
+      return;
+    }
+
+    const selected = { type: target.type, id: target.id };
+    setSelectedPiece(selected);
+    setSelectedPathId(null);
+    setOpenPanel(null);
+    setBoardMenu({
+      type: target.type === "ball" ? "ball" : target.type === "marker" ? "marker" : "piece",
+      point: target.point,
+      target: selected,
+    });
+  }
+
+  function startRunLineFromMenu() {
+    setActiveTool("run");
+    setBoardMenu(null);
+    setOpenPanel(null);
+    setSaveStatus("在球场上拖动画跑动线，松手完成。");
+  }
+
+  function startPassLineFromMenu() {
+    setActiveTool("pass");
+    setBoardMenu(null);
+    setOpenPanel(null);
+    setSaveStatus("在球场上拖动画球路线，松手完成。");
+  }
+
+  function handlePathComplete() {
+    setActiveTool("move");
+    setBoardMenu(null);
   }
 
   function updateCurrentStepBoard(updater) {
@@ -324,6 +427,7 @@ export default function App() {
           state: {
             players: nextBoard.players,
             opponents: nextBoard.opponents,
+            equipment: nextBoard.equipment ?? [],
             ball: nextBoard.ball,
           },
           paths: nextBoard.paths ?? step.paths,
@@ -337,6 +441,8 @@ export default function App() {
     setActiveStepId(stepId);
     setSelectedPathId(null);
     setSelectedPiece(null);
+    setBoardMenu(null);
+    setOpenPanel(null);
     setActiveTool("move");
   }
 
@@ -362,6 +468,39 @@ export default function App() {
       setActiveStepId(nextStepId);
       setSelectedPathId(null);
       setSelectedPiece(null);
+      setActiveTool("move");
+      return [...currentSteps, nextStep];
+    });
+  }
+
+  function copyCurrentStep() {
+    if (!canAddStep || editingDisabled || !activeStep) {
+      return;
+    }
+
+    setSteps((currentSteps) => {
+      const order = currentSteps.length;
+      const nextStepId = getNextStepId(currentSteps);
+      const nextStep = {
+        id: nextStepId,
+        order,
+        title: `Step ${order}`,
+        note: activeStep.note || "复制当前步骤，可继续调整。",
+        baseStateFromStepId: activeStep.id,
+        state: cloneBoardState(activeStep.state),
+        paths: activeStep.paths.map((path) => ({
+          ...path,
+          id: `${path.id}_copy_${Date.now()}`,
+          from: { ...path.from },
+          to: { ...path.to },
+          points: (path.points ?? [path.from, path.to]).map((point) => ({ ...point })),
+        })),
+      };
+
+      setActiveStepId(nextStepId);
+      setSelectedPathId(null);
+      setSelectedPiece(null);
+      setBoardMenu(null);
       setActiveTool("move");
       return [...currentSteps, nextStep];
     });
@@ -418,6 +557,8 @@ export default function App() {
     setActiveTool("move");
     setSelectedPathId(null);
     setSelectedPiece(null);
+    setBoardMenu(null);
+    setOpenPanel(null);
     setSaveStatus(message);
   }
 
@@ -531,6 +672,8 @@ export default function App() {
     setActiveTool("move");
     setSelectedPathId(null);
     setSelectedPiece(null);
+    setBoardMenu(null);
+    setOpenPanel(null);
     playbackRunIdRef.current += 1;
     const startedAt = getNow();
     setPlayback((currentPlayback) => {
@@ -575,6 +718,8 @@ export default function App() {
     setActiveTool("move");
     setSelectedPathId(null);
     setSelectedPiece(null);
+    setBoardMenu(null);
+    setOpenPanel(null);
     playbackRunIdRef.current += 1;
     setPlayback({
       status: "playing",
@@ -592,6 +737,8 @@ export default function App() {
     resetPlayback();
     setSelectedPathId(null);
     setSelectedPiece(null);
+    setBoardMenu(null);
+    setOpenPanel(null);
     setActiveTool("move");
   }
 
@@ -599,6 +746,8 @@ export default function App() {
     resetPlayback();
     setSelectedPathId(null);
     setSelectedPiece(null);
+    setBoardMenu(null);
+    setOpenPanel(null);
     setActiveTool("move");
     setAppMode("presentation");
   }
@@ -617,6 +766,8 @@ export default function App() {
     resetPlayback();
     setSelectedPathId(null);
     setSelectedPiece(null);
+    setBoardMenu(null);
+    setOpenPanel(null);
     setActiveTool("move");
     setAppMode("viewer");
   }
@@ -625,6 +776,8 @@ export default function App() {
     resetPlayback();
     setSelectedPathId(null);
     setSelectedPiece(null);
+    setBoardMenu(null);
+    setOpenPanel(null);
     setActiveTool("move");
     setAppMode("templates");
   }
@@ -651,6 +804,8 @@ export default function App() {
     setActiveStepId(nextStep.id);
     setSelectedPathId(null);
     setSelectedPiece(null);
+    setBoardMenu(null);
+    setOpenPanel(null);
     setActiveTool("move");
   }
 
@@ -718,234 +873,296 @@ export default function App() {
   }
 
   return (
-    <main className="app-shell">
-      <section className="editor-shell" aria-label="现场白板编辑器">
-        <header className="top-bar">
+    <main className="app-shell editor-app">
+      <section className="editor-shell board-editor-shell" aria-label="现场白板编辑器">
+        <header className="top-bar board-top-bar">
           <div>
             <p className="stage-label">现场白板</p>
             <h1>战术动画板</h1>
           </div>
-          <div className="top-actions" aria-label="球场视图">
-            <button
-              className={
-                normalizeFieldView(fieldView) === FIELD_MODES.ATTACKING_HALF
-                  ? "toggle active"
-                  : "toggle"
-              }
-              type="button"
-              onClick={() => setFieldView(FIELD_MODES.ATTACKING_HALF)}
-            >
-              进攻半场
-            </button>
-            <button
-              className={
-                normalizeFieldView(fieldView) === FIELD_MODES.FULL_FIELD
-                  ? "toggle active"
-                  : "toggle"
-              }
-              type="button"
-              onClick={() => setFieldView(FIELD_MODES.FULL_FIELD)}
-            >
-              全场
-            </button>
-            <button className="toggle action secondary" type="button" onClick={returnToHomeMode}>
-              首页
-            </button>
-            <button
-              className="toggle action"
-              type="button"
-              data-testid="template-library-entry"
-              onClick={enterTemplateLibrary}
-            >
-              模板
-            </button>
-            <button className="toggle action" type="button" onClick={enterPresentationMode}>
-              展示
-            </button>
-            <button className="toggle action" type="button" onClick={enterViewerMode}>
-              观看
-            </button>
+          <div className="top-step-summary">
+            <strong>
+              Step {displayedStepIndex} / {Math.max(steps.length - 1, 0)}
+            </strong>
+            <span>{displayedStep?.note}</span>
           </div>
         </header>
 
-        <div className="workspace">
-          <aside className="tool-rail" aria-label="现场工具栏">
-            <button
-              className={activeTool === "move" ? "tool-button active" : "tool-button"}
-              type="button"
-              onClick={() => setActiveTool("move")}
-              disabled={editingDisabled}
-            >
-              移动
-            </button>
-            <button
-              className={activeTool === "run" ? "tool-button active" : "tool-button"}
-              type="button"
-              onClick={() => setActiveTool("run")}
-              disabled={editingDisabled}
-            >
-              跑动箭头
-            </button>
-            <button
-              className={activeTool === "pass" ? "tool-button active" : "tool-button"}
-              type="button"
-              onClick={() => setActiveTool("pass")}
-              disabled={editingDisabled}
-            >
-              球路箭头
-            </button>
-            <button
-              className="tool-button"
-              type="button"
-              data-testid="add-home-piece"
-              onClick={addHomePlayer}
-              disabled={editingDisabled}
-            >
-              加本方
-            </button>
-            <button
-              className="tool-button"
-              type="button"
-              data-testid="add-away-piece"
-              onClick={addOpponentPlayer}
-              disabled={editingDisabled}
-            >
-              加对手
-            </button>
-            <button
-              className="tool-button"
-              type="button"
-              data-testid="restore-ball"
-              onClick={restoreFootball}
-              disabled={editingDisabled}
-            >
-              足球
-            </button>
-            <button
-              className="tool-button danger"
-              type="button"
-              data-testid="delete-selected-piece"
-              onClick={deleteSelectedPiece}
-              disabled={editingDisabled || !selectedPiece}
-            >
-              删棋子
-            </button>
-            <button
-              className="tool-button"
-              type="button"
-              onClick={undoLatestPath}
-              disabled={editingDisabled || boardState.paths.length === 0}
-            >
-              撤销
-            </button>
-            <button
-              className="tool-button"
-              type="button"
-              onClick={deleteSelectedPath}
-              disabled={editingDisabled || !selectedPathId}
-            >
-              删除路线
-            </button>
-            <button
-              className="tool-button"
-              type="button"
-              onClick={clearPaths}
-              disabled={editingDisabled || boardState.paths.length === 0}
-            >
-              清除路线
-            </button>
-            <button
-              className="tool-button"
-              type="button"
-              onClick={restoreDefaultLayout}
-              disabled={editingDisabled}
-            >
-              恢复默认
-            </button>
-            <button
-              className="tool-button danger"
-              type="button"
-              onClick={clearBoard}
-              disabled={editingDisabled}
-            >
-              清空画面
-            </button>
+        <div className="workspace board-workspace">
+          <section className="board-area board-first-area">
+            <div className="floating-board-controls" aria-label="现场白板快捷操作">
+              <button type="button" onClick={returnToHomeMode}>
+                返回
+              </button>
+              <button
+                className={openPanel === "steps" ? "active" : ""}
+                type="button"
+                data-testid="floating-step-toggle"
+                onClick={() => togglePanel("steps")}
+              >
+                步骤
+              </button>
+              <button
+                type="button"
+                data-testid="floating-add-toggle"
+                onClick={() => {
+                  setOpenPanel(null);
+                  setBoardMenu({ type: "add", point: { x: 50, y: 32 } });
+                }}
+                disabled={editingDisabled}
+              >
+                添加
+              </button>
+              <button
+                className="primary"
+                type="button"
+                onClick={playback.status === "playing" ? pausePlayback : playSteps}
+                disabled={!canPlay && playback.status !== "playing"}
+              >
+                {playback.status === "playing" ? "暂停" : "播放"}
+              </button>
+              <button
+                className={openPanel === "more" ? "active" : ""}
+                type="button"
+                onClick={() => togglePanel("more")}
+              >
+                更多
+              </button>
+            </div>
 
-            <SavePanel
-              tacticTitle={tacticMeta.title}
-              onTitleChange={updateTacticTitle}
-              onSave={saveCurrentTactic}
-              onLoadSaved={loadRecentTactic}
-              onExportJson={exportTacticJson}
-              onImportJson={importTacticJson}
-              onExportStepImage={exportCurrentStepImage}
-              savedSummary={savedSummary}
-              status={saveStatus}
-              disabled={editingDisabled}
-            />
+            {openPanel === "steps" ? (
+              <section className="floating-panel floating-step-panel" aria-label="步骤管理">
+                <div className="step-panel-header">
+                  <span>步骤</span>
+                  <div className="step-actions">
+                    <button
+                      className="small-button"
+                      type="button"
+                      onClick={() => goToStepByIndex(activeStepIndex - 1)}
+                      disabled={!canGoPreviousStep || editingDisabled}
+                    >
+                      上一步
+                    </button>
+                    <button
+                      className="small-button"
+                      type="button"
+                      onClick={() => goToStepByIndex(activeStepIndex + 1)}
+                      disabled={!canGoNextStep || editingDisabled}
+                    >
+                      下一步
+                    </button>
+                    <button
+                      className="small-button"
+                      type="button"
+                      onClick={addNextStep}
+                      disabled={!canAddStep || editingDisabled}
+                    >
+                      新增
+                    </button>
+                    <button
+                      className="small-button"
+                      type="button"
+                      onClick={copyCurrentStep}
+                      disabled={!canAddStep || editingDisabled}
+                    >
+                      复制
+                    </button>
+                    <button
+                      className="small-button danger"
+                      type="button"
+                      data-testid="delete-current-step"
+                      onClick={deleteCurrentStep}
+                      disabled={!canDeleteCurrentStep || editingDisabled}
+                    >
+                      删除
+                    </button>
+                  </div>
+                </div>
 
-            <div className="step-panel" aria-label="分步状态">
-              <div className="step-panel-header">
-                <span>步骤</span>
-                <div className="step-actions">
+                <div className="step-list compact">
+                  {steps.map((step) => {
+                    const isCurrentStep = step.id === displayedStep?.id;
+                    const isEditingStep = step.id === activeStepId;
+
+                    return (
+                      <button
+                        key={step.id}
+                        className={[
+                          "step-button",
+                          isEditingStep ? "active" : "",
+                          isCurrentStep && isPlaybackVisible ? "playback-current" : "",
+                        ]
+                          .filter(Boolean)
+                          .join(" ")}
+                        type="button"
+                        onClick={() => selectStep(step.id)}
+                      >
+                        <strong>{step.title}</strong>
+                        <span>{step.baseStateFromStepId ? "继承上一状态" : "初始站位"}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <label className="step-note">
+                  <span>本步说明</span>
+                  <textarea
+                    value={activeStep.note}
+                    onChange={(event) => updateStepNote(event.target.value)}
+                    rows="3"
+                    disabled={editingDisabled}
+                  />
+                </label>
+              </section>
+            ) : null}
+
+            {openPanel === "more" ? (
+              <section className="floating-panel more-panel" aria-label="更多工具">
+                <div className="more-panel-actions">
+                  <button
+                    className={
+                      normalizeFieldView(fieldView) === FIELD_MODES.ATTACKING_HALF
+                        ? "small-button active"
+                        : "small-button"
+                    }
+                    type="button"
+                    onClick={() => setFieldView(FIELD_MODES.ATTACKING_HALF)}
+                  >
+                    进攻半场
+                  </button>
+                  <button
+                    className={
+                      normalizeFieldView(fieldView) === FIELD_MODES.FULL_FIELD
+                        ? "small-button active"
+                        : "small-button"
+                    }
+                    type="button"
+                    onClick={() => setFieldView(FIELD_MODES.FULL_FIELD)}
+                  >
+                    全场
+                  </button>
+                  <button className="small-button" type="button" onClick={enterTemplateLibrary}>
+                    模板
+                  </button>
+                  <button className="small-button" type="button" onClick={enterPresentationMode}>
+                    展示
+                  </button>
+                  <button className="small-button" type="button" onClick={enterViewerMode}>
+                    观看
+                  </button>
                   <button
                     className="small-button"
                     type="button"
-                    onClick={addNextStep}
-                    disabled={!canAddStep || editingDisabled}
+                    onClick={startRunLineFromMenu}
+                    disabled={editingDisabled}
                   >
-                    新增
+                    跑动线
+                  </button>
+                  <button
+                    className="small-button"
+                    type="button"
+                    onClick={startPassLineFromMenu}
+                    disabled={editingDisabled}
+                  >
+                    球路线
+                  </button>
+                  <button
+                    className="small-button"
+                    type="button"
+                    onClick={undoLatestPath}
+                    disabled={editingDisabled || boardState.paths.length === 0}
+                  >
+                    撤销路线
+                  </button>
+                  <button
+                    className="small-button"
+                    type="button"
+                    onClick={deleteSelectedPath}
+                    disabled={editingDisabled || !selectedPathId}
+                  >
+                    删除路线
+                  </button>
+                  <button
+                    className="small-button"
+                    type="button"
+                    onClick={clearPaths}
+                    disabled={editingDisabled || boardState.paths.length === 0}
+                  >
+                    清除路线
+                  </button>
+                  <button
+                    className="small-button"
+                    type="button"
+                    onClick={restoreDefaultLayout}
+                    disabled={editingDisabled}
+                  >
+                    恢复默认
                   </button>
                   <button
                     className="small-button danger"
                     type="button"
-                    data-testid="delete-current-step"
-                    onClick={deleteCurrentStep}
-                    disabled={!canDeleteCurrentStep || editingDisabled}
+                    onClick={clearBoard}
+                    disabled={editingDisabled}
                   >
-                    删除
+                    清空画面
                   </button>
                 </div>
-              </div>
 
-              <div className="step-list">
-                {steps.map((step) => {
-                  const isCurrentStep = step.id === displayedStep?.id;
-                  const isEditingStep = step.id === activeStepId;
-
-                  return (
-                    <button
-                      key={step.id}
-                      className={[
-                        "step-button",
-                        isEditingStep ? "active" : "",
-                        isCurrentStep && isPlaybackVisible ? "playback-current" : "",
-                      ]
-                        .filter(Boolean)
-                        .join(" ")}
-                      type="button"
-                      onClick={() => selectStep(step.id)}
-                    >
-                      <strong>{step.title}</strong>
-                      <span>{step.baseStateFromStepId ? "继承上一状态" : "初始站位"}</span>
-                    </button>
-                  );
-                })}
-              </div>
-
-              <label className="step-note">
-                <span>本步说明</span>
-                <textarea
-                  value={activeStep.note}
-                  onChange={(event) => updateStepNote(event.target.value)}
-                  rows="3"
+                <SavePanel
+                  tacticTitle={tacticMeta.title}
+                  onTitleChange={updateTacticTitle}
+                  onSave={saveCurrentTactic}
+                  onLoadSaved={loadRecentTactic}
+                  onExportJson={exportTacticJson}
+                  onImportJson={importTacticJson}
+                  onExportStepImage={exportCurrentStepImage}
+                  savedSummary={savedSummary}
+                  status={saveStatus}
                   disabled={editingDisabled}
                 />
-              </label>
-            </div>
-          </aside>
+              </section>
+            ) : null}
 
-          <section className="board-area">
+            {activeTool !== "move" && !editingDisabled ? (
+              <div className="drawing-hint">
+                {activeTool === "pass"
+                  ? "球路线：在球场上拖动，松手完成。"
+                  : "跑动线：在球场上拖动，松手完成。"}
+              </div>
+            ) : null}
+
+            <div className="board-stage">
+              <TacticBoard
+                activeTool={activeTool}
+                boardState={displayedBoardState}
+                fieldView={fieldView}
+                onBlankPoint={handleBlankBoardPoint}
+                onPathComplete={handlePathComplete}
+                onPieceTap={handlePieceTap}
+                readOnly={isPlaybackVisible}
+                selectedPathId={selectedPathId}
+                selectedPiece={selectedPiece}
+                setSelectedPathId={setSelectedPathId}
+                setSelectedPiece={setSelectedPiece}
+                setBoardState={updateCurrentStepBoard}
+              />
+
+              {boardMenu ? (
+                <BoardContextMenu
+                  menu={boardMenu}
+                  onAddBall={() => restoreFootball(boardMenu.point)}
+                  onAddHome={() => addHomePlayer(boardMenu.point)}
+                  onAddMarker={() => addTrainingMarker(boardMenu.point)}
+                  onAddOpponent={() => addOpponentPlayer(boardMenu.point)}
+                  onClose={() => setBoardMenu(null)}
+                  onDelete={deleteSelectedPiece}
+                  onPassLine={startPassLineFromMenu}
+                  onResetBall={() => restoreFootball(boardMenu.point)}
+                  onRunLine={startRunLineFromMenu}
+                />
+              ) : null}
+            </div>
+
             <PlaybackStrip
               canPlay={canPlay}
               currentStepIndex={displayedStepIndex}
@@ -959,21 +1176,116 @@ export default function App() {
               status={playback.status}
               totalSteps={steps.length}
             />
-            <TacticBoard
-              activeTool={activeTool}
-              boardState={displayedBoardState}
-              fieldView={fieldView}
-              readOnly={isPlaybackVisible}
-              selectedPathId={selectedPathId}
-              selectedPiece={selectedPiece}
-              setSelectedPathId={setSelectedPathId}
-              setSelectedPiece={setSelectedPiece}
-              setBoardState={updateCurrentStepBoard}
-            />
           </section>
         </div>
       </section>
     </main>
+  );
+}
+
+function BoardContextMenu({
+  menu,
+  onAddBall,
+  onAddHome,
+  onAddMarker,
+  onAddOpponent,
+  onClose,
+  onDelete,
+  onPassLine,
+  onResetBall,
+  onRunLine,
+}) {
+  const style = {
+    left: `clamp(90px, ${menu.point.x}%, calc(100% - 90px))`,
+    top: `clamp(90px, ${(menu.point.y / 64) * 100}%, calc(100% - 18px))`,
+  };
+
+  if (menu.type === "add") {
+    return (
+      <div
+        className="board-context-menu add-menu"
+        style={style}
+        data-testid="add-object-menu"
+      >
+        <strong>添加到这里</strong>
+        <button type="button" onClick={onAddHome}>
+          本方队员
+        </button>
+        <button type="button" onClick={onAddOpponent}>
+          对方队员
+        </button>
+        <button type="button" onClick={onAddBall}>
+          足球
+        </button>
+        <button type="button" onClick={onAddMarker}>
+          标志桶
+        </button>
+        <button type="button" className="muted" onClick={onClose}>
+          取消
+        </button>
+      </div>
+    );
+  }
+
+  if (menu.type === "ball") {
+    return (
+      <div
+        className="board-context-menu object-menu"
+        style={style}
+        data-testid="object-action-menu"
+      >
+        <strong>足球</strong>
+        <button type="button" onClick={onPassLine}>
+          球路
+        </button>
+        <button type="button" onClick={onResetBall}>
+          重置足球
+        </button>
+        <button type="button" className="danger" onClick={onDelete}>
+          隐藏足球
+        </button>
+        <button type="button" className="muted" onClick={onClose}>
+          取消
+        </button>
+      </div>
+    );
+  }
+
+  if (menu.type === "marker") {
+    return (
+      <div
+        className="board-context-menu object-menu"
+        style={style}
+        data-testid="object-action-menu"
+      >
+        <strong>标志桶</strong>
+        <button type="button" className="danger" onClick={onDelete}>
+          删除
+        </button>
+        <button type="button" className="muted" onClick={onClose}>
+          取消
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div
+      className="board-context-menu object-menu"
+      style={style}
+      data-testid="object-action-menu"
+    >
+      <strong>队员</strong>
+      <button type="button" onClick={onRunLine}>
+        跑动线
+      </button>
+      <button type="button" className="danger" onClick={onDelete}>
+        删除
+      </button>
+      <button type="button" className="muted" onClick={onClose}>
+        取消
+      </button>
+    </div>
   );
 }
 

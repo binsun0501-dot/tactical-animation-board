@@ -62,6 +62,7 @@ export function interpolateBoardState(fromState, toState, paths, progress) {
       usedRunPathIds,
       progress,
     ),
+    equipment: toState.equipment ?? fromState.equipment ?? [],
     ball: interpolateBall(fromState.ball, toState.ball, passPaths, progress),
     paths,
   };
