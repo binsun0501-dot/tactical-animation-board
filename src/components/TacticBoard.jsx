@@ -29,13 +29,21 @@ export function TacticBoard({
   const normalizedFieldView = normalizeFieldView(fieldView);
 
   function pointFromEvent(event) {
-    const rect = svgRef.current.getBoundingClientRect();
-    const x = ((event.clientX - rect.left) / rect.width) * BOARD_WIDTH;
-    const y = ((event.clientY - rect.top) / rect.height) * BOARD_HEIGHT;
+    const svg = svgRef.current;
+    const screenMatrix = svg?.getScreenCTM();
+
+    if (!svg || !screenMatrix) {
+      return { x: 50, y: 32 };
+    }
+
+    const point = svg.createSVGPoint();
+    point.x = event.clientX;
+    point.y = event.clientY;
+    const boardPoint = point.matrixTransform(screenMatrix.inverse());
 
     return {
-      x: clamp(x, 2, BOARD_WIDTH - 2),
-      y: clamp(y, 2, BOARD_HEIGHT - 2),
+      x: clamp(boardPoint.x, 2, BOARD_WIDTH - 2),
+      y: clamp(boardPoint.y, 2, BOARD_HEIGHT - 2),
     };
   }
 
@@ -283,16 +291,6 @@ export function TacticBoard({
           />
         ) : null}
 
-        {(boardState.equipment ?? []).map((item) => (
-          <EquipmentMarker
-            key={item.id}
-            item={item}
-            selected={isSelectedPiece(selectedPiece, "marker", item.id)}
-            onPointerDown={(event) =>
-              startDrag(event, { type: "marker", id: item.id })
-            }
-          />
-        ))}
       </svg>
     </div>
   );
@@ -423,22 +421,6 @@ function BallPiece({ ball, onPointerDown, selected }) {
     >
       <circle r={BALL_RADIUS} />
       <path d="M -1.1 -0.4 L 0 -1.25 L 1.1 -0.4 L 0.7 0.95 L -0.7 0.95 Z" />
-    </g>
-  );
-}
-
-function EquipmentMarker({ item, onPointerDown, selected }) {
-  return (
-    <g
-      className={selected ? "equipment-marker selected-piece" : "equipment-marker"}
-      transform={`translate(${item.position.x} ${item.position.y})`}
-      onPointerDown={onPointerDown}
-      tabIndex="0"
-      role="button"
-      aria-label={item.label || "标志桶"}
-    >
-      <rect x="-2.4" y="-2.4" width="4.8" height="4.8" rx="0.7" />
-      <text y="0.9">{(item.label || "标志桶").slice(0, 1)}</text>
     </g>
   );
 }

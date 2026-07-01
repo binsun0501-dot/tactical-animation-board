@@ -239,7 +239,7 @@ function cloneEquipment(item) {
     ...item,
     id: String(item.id),
     type: item.type || "marker",
-    label: String(item.label || "标志桶"),
+    label: String(item.label || "辅助物"),
     position,
   };
 }

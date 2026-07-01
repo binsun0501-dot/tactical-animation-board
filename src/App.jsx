@@ -32,6 +32,13 @@ const IDLE_PLAYBACK = {
   startedAt: null,
 };
 const PLAYBACK_REFRESH_MS = 1000 / 60;
+const BATCH_ADD_OFFSETS = [
+  { x: 0, y: 0 },
+  { x: 4.5, y: -4.5 },
+  { x: 4.5, y: 4.5 },
+  { x: -4.5, y: -4.5 },
+  { x: -4.5, y: 4.5 },
+];
 
 function createInitialAppState() {
   const defaultSteps = createInitialSteps();
@@ -238,39 +245,45 @@ export default function App() {
     setBoardMenu(null);
   }
 
-  function addHomePlayer(position = null) {
-    const nextPiece = {
-      id: `player_${Date.now()}`,
-      number: getNextPieceNumber(boardState.players),
-      position: position ?? getNewPiecePosition("home", boardState.players.length),
-    };
-
-    updateCurrentStepBoard((current) => {
-      return {
-        ...current,
-        players: [...current.players, nextPiece],
-      };
+  function addHomePlayers(count = 1, position = null) {
+    const currentCount = boardState.players.length;
+    const startNumber = getNextPieceNumber(boardState.players);
+    const nextPieces = createBatchPieces({
+      baseId: "player",
+      count,
+      kind: "home",
+      position,
+      startIndex: currentCount,
+      startNumber,
     });
-    setSelectedPiece({ type: "player", id: nextPiece.id });
+
+    updateCurrentStepBoard((current) => ({
+      ...current,
+      players: [...current.players, ...nextPieces],
+    }));
+    setSelectedPiece({ type: "player", id: nextPieces[0].id });
     setActiveTool("move");
     setSelectedPathId(null);
     setBoardMenu(null);
   }
 
-  function addOpponentPlayer(position = null) {
-    const nextPiece = {
-      id: `opponent_${Date.now()}`,
-      number: getNextPieceNumber(boardState.opponents),
-      position: position ?? getNewPiecePosition("away", boardState.opponents.length),
-    };
-
-    updateCurrentStepBoard((current) => {
-      return {
-        ...current,
-        opponents: [...current.opponents, nextPiece],
-      };
+  function addOpponentPlayers(count = 1, position = null) {
+    const currentCount = boardState.opponents.length;
+    const startNumber = getNextPieceNumber(boardState.opponents);
+    const nextPieces = createBatchPieces({
+      baseId: "opponent",
+      count,
+      kind: "away",
+      position,
+      startIndex: currentCount,
+      startNumber,
     });
-    setSelectedPiece({ type: "opponent", id: nextPiece.id });
+
+    updateCurrentStepBoard((current) => ({
+      ...current,
+      opponents: [...current.opponents, ...nextPieces],
+    }));
+    setSelectedPiece({ type: "opponent", id: nextPieces[0].id });
     setActiveTool("move");
     setSelectedPathId(null);
     setBoardMenu(null);
@@ -289,24 +302,6 @@ export default function App() {
       };
     });
     setSelectedPiece({ type: "ball", id: ball.id });
-    setActiveTool("move");
-    setSelectedPathId(null);
-    setBoardMenu(null);
-  }
-
-  function addTrainingMarker(position) {
-    const marker = {
-      id: `marker_${Date.now()}`,
-      type: "marker",
-      label: "标志桶",
-      position,
-    };
-
-    updateCurrentStepBoard((current) => ({
-      ...current,
-      equipment: [...(current.equipment ?? []), marker],
-    }));
-    setSelectedPiece({ type: "marker", id: marker.id });
     setActiveTool("move");
     setSelectedPathId(null);
     setBoardMenu(null);
@@ -789,7 +784,7 @@ export default function App() {
 
   function copyTemplateToTactic(template) {
     const appState = createTemplateAppState(template);
-    applyTacticState(appState, `已复制「${template.name}」，可继续修改并保存`);
+    applyTacticState(appState, `已复制示例「${template.name}」，请按实际战术修改。`);
     setAppMode("edit");
     setSavedSummary(getSavedTacticSummary());
   }
@@ -1042,7 +1037,7 @@ export default function App() {
                     全场
                   </button>
                   <button className="small-button" type="button" onClick={enterTemplateLibrary}>
-                    模板
+                    示例
                   </button>
                   <button className="small-button" type="button" onClick={enterPresentationMode}>
                     展示
@@ -1151,9 +1146,8 @@ export default function App() {
                 <BoardContextMenu
                   menu={boardMenu}
                   onAddBall={() => restoreFootball(boardMenu.point)}
-                  onAddHome={() => addHomePlayer(boardMenu.point)}
-                  onAddMarker={() => addTrainingMarker(boardMenu.point)}
-                  onAddOpponent={() => addOpponentPlayer(boardMenu.point)}
+                  onAddHome={(count) => addHomePlayers(count, boardMenu.point)}
+                  onAddOpponent={(count) => addOpponentPlayers(count, boardMenu.point)}
                   onClose={() => setBoardMenu(null)}
                   onDelete={deleteSelectedPiece}
                   onPassLine={startPassLineFromMenu}
@@ -1162,6 +1156,17 @@ export default function App() {
                 />
               ) : null}
             </div>
+
+            {!editingDisabled && boardState.paths.length > 0 ? (
+              <div className="quick-route-controls" aria-label="路线快捷操作">
+                <button type="button" data-testid="quick-undo-path" onClick={undoLatestPath}>
+                  撤销上一笔
+                </button>
+                <button type="button" onClick={clearPaths}>
+                  清除路线
+                </button>
+              </div>
+            ) : null}
 
             <PlaybackStrip
               canPlay={canPlay}
@@ -1187,7 +1192,6 @@ function BoardContextMenu({
   menu,
   onAddBall,
   onAddHome,
-  onAddMarker,
   onAddOpponent,
   onClose,
   onDelete,
@@ -1208,17 +1212,20 @@ function BoardContextMenu({
         data-testid="add-object-menu"
       >
         <strong>添加到这里</strong>
-        <button type="button" onClick={onAddHome}>
-          本方队员
+        <button type="button" onClick={() => onAddHome(1)}>
+          本方 +1
         </button>
-        <button type="button" onClick={onAddOpponent}>
-          对方队员
+        <button type="button" onClick={() => onAddHome(5)}>
+          本方 +5
+        </button>
+        <button type="button" onClick={() => onAddOpponent(1)}>
+          对方 +1
+        </button>
+        <button type="button" onClick={() => onAddOpponent(5)}>
+          对方 +5
         </button>
         <button type="button" onClick={onAddBall}>
           足球
-        </button>
-        <button type="button" onClick={onAddMarker}>
-          标志桶
         </button>
         <button type="button" className="muted" onClick={onClose}>
           取消
@@ -1243,24 +1250,6 @@ function BoardContextMenu({
         </button>
         <button type="button" className="danger" onClick={onDelete}>
           隐藏足球
-        </button>
-        <button type="button" className="muted" onClick={onClose}>
-          取消
-        </button>
-      </div>
-    );
-  }
-
-  if (menu.type === "marker") {
-    return (
-      <div
-        className="board-context-menu object-menu"
-        style={style}
-        data-testid="object-action-menu"
-      >
-        <strong>标志桶</strong>
-        <button type="button" className="danger" onClick={onDelete}>
-          删除
         </button>
         <button type="button" className="muted" onClick={onClose}>
           取消
@@ -1314,8 +1303,8 @@ function HomeMode({ onOpenRecent, onOpenTemplates, onStartBoard, savedSummary })
             data-testid="home-template-entry"
             onClick={onOpenTemplates}
           >
-            <span>基础模板</span>
-            <strong>从 8 个足球模板复制后修改。</strong>
+            <span>示例模板</span>
+            <strong>用于演示分步动画，复制后按真实战术修改。</strong>
           </button>
         </div>
 
@@ -1492,7 +1481,7 @@ function TemplateLibraryMode({ onCopyTemplate, onReturnToEdit, templates }) {
     <main className="app-shell template-app">
       <section
         className="template-shell"
-        aria-label="基础足球模板库"
+        aria-label="足球动作示例模板"
         data-testid="template-library"
       >
         <header className="template-header">
@@ -1500,8 +1489,11 @@ function TemplateLibraryMode({ onCopyTemplate, onReturnToEdit, templates }) {
             返回现场白板
           </button>
           <div>
-            <p className="stage-label">基础模板库</p>
-            <h1>8 个足球基础模板</h1>
+            <p className="stage-label">示例模板</p>
+            <h1>8 个足球动作示例</h1>
+            <p className="template-disclaimer">
+              用于演示分步动画和编辑能力，真实训练前请按实际战术自行调整。
+            </p>
           </div>
         </header>
 
@@ -1895,6 +1887,35 @@ function getNewPiecePosition(kind, count) {
     x: clampBoardNumber(x, 8, 92),
     y: clampBoardNumber(y, 8, 56),
   };
+}
+
+function createBatchPieces({
+  baseId,
+  count,
+  kind,
+  position,
+  startIndex,
+  startNumber,
+}) {
+  const timestamp = Date.now();
+
+  return Array.from({ length: count }, (_, index) => {
+    const offset = BATCH_ADD_OFFSETS[index % BATCH_ADD_OFFSETS.length];
+    const fallbackPosition = getNewPiecePosition(kind, startIndex + index);
+    const piecePosition = position
+      ? {
+          x: clampBoardNumber(position.x + offset.x, 8, 92),
+          y: clampBoardNumber(position.y + offset.y, 8, 56),
+        }
+      : fallbackPosition;
+
+    return {
+      id: `${baseId}_${timestamp}_${index}`,
+      teamId: kind === "away" ? "team_away" : "team_home",
+      number: String(startNumber + index),
+      position: piecePosition,
+    };
+  });
 }
 
 function normalizeStepOrder(steps) {

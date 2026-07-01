@@ -9,7 +9,7 @@ const FIELD_SIZE = {
 export const TACTIC_TEMPLATES = [
   makeTemplate({
     id: "template_7v7_basic_shape",
-    name: "7 人制基础站位模板",
+    name: "7 人制基础站位示例",
     category: "基础站位",
     description: "全场向右进攻，帮助青训队员理解门将、后卫、中场和前锋之间的基础距离。",
     suitableFor: ["U8-U12 青训", "校园足球", "新手教练"],
@@ -126,7 +126,7 @@ export const TACTIC_TEMPLATES = [
 
   makeTemplate({
     id: "template_433_basic_shape",
-    name: "11 人制 4-3-3 基础阵型模板",
+    name: "11 人制 4-3-3 阵型示例",
     category: "基础站位",
     description: "全场向右进攻，用关键位置展示 4-3-3 的后场宽度、中场连接和前场三点。",
     suitableFor: ["校园足球", "基础教练", "11 人制入门"],
@@ -255,7 +255,7 @@ export const TACTIC_TEMPLATES = [
 
   makeTemplate({
     id: "template_fullback_overlap",
-    name: "边后卫套边模板",
+    name: "边后卫套边动作示例",
     category: "进攻配合",
     description: "目标球门在右侧，边锋内收吸引防守，边后卫从外线套上接球。",
     suitableFor: ["边路进攻训练", "U10 以上青训", "业余球队"],
@@ -387,7 +387,7 @@ export const TACTIC_TEMPLATES = [
 
   makeTemplate({
     id: "template_winger_inside_fullback_width",
-    name: "边锋内切 + 边后卫拉宽模板",
+    name: "边锋内切 + 边后卫拉宽示例",
     category: "进攻配合",
     description: "目标球门在右侧，边锋向中路拿球，边后卫保持外线宽度，形成内外两个选择。",
     suitableFor: ["边路进攻", "青训配合课", "业余球队"],
@@ -494,7 +494,7 @@ export const TACTIC_TEMPLATES = [
 
   makeTemplate({
     id: "template_pivot_drop_support",
-    name: "后腰回撤接应模板",
+    name: "后腰回撤接应示例",
     category: "出球组织",
     description: "全场向右推进，后腰回撤到中卫之间或身前，帮助后场摆脱第一道逼抢。",
     suitableFor: ["后场出球", "校园足球", "基础教练"],
@@ -606,7 +606,7 @@ export const TACTIC_TEMPLATES = [
 
   makeTemplate({
     id: "template_defensive_line_shift",
-    name: "防线整体横移模板",
+    name: "防线整体横移示例",
     category: "防守联动",
     description: "全场防守横移，防线根据球所在边路整体移动，保持距离和保护中路。",
     suitableFor: ["防守训练", "青训基础", "业余球队"],
@@ -720,7 +720,7 @@ export const TACTIC_TEMPLATES = [
 
   makeTemplate({
     id: "template_high_press_basic",
-    name: "高位逼抢基础模板",
+    name: "高位逼抢动作示例",
     category: "防守联动",
     description: "目标球门在右侧，前场三人统一方向逼抢，后方队员前压保持距离。",
     suitableFor: ["高位逼抢入门", "校园足球", "业余球队"],
@@ -831,7 +831,7 @@ export const TACTIC_TEMPLATES = [
 
   makeTemplate({
     id: "template_counter_after_win",
-    name: "抢断后快速反击模板",
+    name: "抢断后快速反击示例",
     category: "攻防转换",
     description: "目标球门在右侧，抢断后第一脚向前，边路和中路同步前插形成反击。",
     suitableFor: ["攻防转换", "青训比赛讲解", "业余球队"],

@@ -67,7 +67,6 @@ export function createCurrentStepImageSvg({
   <g transform="translate(0 ${BOARD_Y})">
     ${renderField(fieldView)}
     ${renderPaths(boardState.paths)}
-    ${renderEquipment(boardState.equipment)}
     ${renderPieces(boardState.players, "home")}
     ${renderPieces(boardState.opponents, "away")}
     ${boardState.ball ? renderBall(boardState.ball) : ""}
@@ -162,7 +161,7 @@ function renderEquipment(equipment = []) {
   return equipment
     .map((item) => {
       const position = item.position ?? { x: 50, y: 32 };
-      const label = escapeXml(item.label || "标志桶");
+      const label = escapeXml(item.label || "辅助物");
 
       return `<g transform="translate(${position.x} ${position.y})">
         <rect x="-2.3" y="-2.3" width="4.6" height="4.6" rx="0.7" fill="#ff9f1c" stroke="rgba(255,255,255,0.92)" stroke-width="0.45"/>
