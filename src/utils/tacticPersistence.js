@@ -269,11 +269,14 @@ function clonePosition(position) {
 }
 
 function normalizeBoardStateForApp(state = {}, tactic = {}) {
+  const hasStepBall = Object.prototype.hasOwnProperty.call(state, "ball");
+  const resolvedBall = hasStepBall ? state.ball : tactic.ball;
+
   return {
     players: normalizePiecesForApp(state.players ?? tactic.players, "home"),
     opponents: normalizePiecesForApp(state.opponents ?? tactic.opponents, "away"),
     equipment: normalizeEquipmentForApp(state.equipment ?? tactic.equipment),
-    ball: cloneBall(state.ball ?? tactic.ball),
+    ball: cloneBall(resolvedBall),
   };
 }
 
