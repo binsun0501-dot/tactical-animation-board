@@ -1,3 +1,5 @@
+import { FIELD_MODES, normalizeFieldView } from "../utils/fieldModes.js";
+
 const FIELD_SIZE = {
   width: 100,
   height: 64,
@@ -9,18 +11,18 @@ export const TACTIC_TEMPLATES = [
     id: "template_7v7_basic_shape",
     name: "7 人制基础站位模板",
     category: "基础站位",
-    description: "帮助青训队员理解门将、后卫、中场和前锋之间的基础距离。",
+    description: "全场向右进攻，帮助青训队员理解门将、后卫、中场和前锋之间的基础距离。",
     suitableFor: ["U8-U12 青训", "校园足球", "新手教练"],
-    fieldView: "half",
+    fieldView: FIELD_MODES.FULL_FIELD,
     format: "7v7",
     tags: ["7人制", "站位", "传接球"],
     difficulty: "入门",
-    recommendedMode: "半场讲解",
+    recommendedMode: "全场站位",
     steps: [
       step(
         0,
         "初始站位",
-        "先让孩子看到 1-2-3-1 的基础距离。",
+        "全场向右进攻，先看 1-2-3-1 的基础距离。",
         board(
           [
             home("p1", "1", 12, 32),
@@ -126,9 +128,9 @@ export const TACTIC_TEMPLATES = [
     id: "template_433_basic_shape",
     name: "11 人制 4-3-3 基础阵型模板",
     category: "基础站位",
-    description: "用关键位置展示 4-3-3 的后场宽度、中场连接和前场三点。",
+    description: "全场向右进攻，用关键位置展示 4-3-3 的后场宽度、中场连接和前场三点。",
     suitableFor: ["校园足球", "基础教练", "11 人制入门"],
-    fieldView: "full",
+    fieldView: FIELD_MODES.FULL_FIELD,
     format: "11v11",
     tags: ["11人制", "4-3-3", "阵型"],
     difficulty: "基础",
@@ -137,7 +139,7 @@ export const TACTIC_TEMPLATES = [
       step(
         0,
         "基础阵型",
-        "先看 4-3-3 的纵向层次和横向宽度。",
+        "全场向右进攻，先看 4-3-3 的纵向层次和横向宽度。",
         board(
           [
             home("p1", "1", 9, 32),
@@ -255,18 +257,18 @@ export const TACTIC_TEMPLATES = [
     id: "template_fullback_overlap",
     name: "边后卫套边模板",
     category: "进攻配合",
-    description: "边锋内收吸引防守，边后卫从外线套上接球。",
+    description: "目标球门在右侧，边锋内收吸引防守，边后卫从外线套上接球。",
     suitableFor: ["边路进攻训练", "U10 以上青训", "业余球队"],
-    fieldView: "half",
+    fieldView: FIELD_MODES.ATTACKING_HALF,
     format: "7v7/11v11",
     tags: ["边路", "套边", "传中"],
     difficulty: "基础",
-    recommendedMode: "半场讲解",
+    recommendedMode: "进攻半场",
     steps: [
       step(
         0,
         "边路持球",
-        "边锋拿球，边后卫在身后保持可套上的距离。",
+        "目标球门在右侧，边锋拿球，边后卫在身后准备套上。",
         board(
           [
             home("p2", "2", 54, 56),
@@ -387,18 +389,18 @@ export const TACTIC_TEMPLATES = [
     id: "template_winger_inside_fullback_width",
     name: "边锋内切 + 边后卫拉宽模板",
     category: "进攻配合",
-    description: "边锋向中路拿球，边后卫保持外线宽度，形成内外两个选择。",
+    description: "目标球门在右侧，边锋向中路拿球，边后卫保持外线宽度，形成内外两个选择。",
     suitableFor: ["边路进攻", "青训配合课", "业余球队"],
-    fieldView: "half",
+    fieldView: FIELD_MODES.ATTACKING_HALF,
     format: "7v7/11v11",
     tags: ["内切", "拉宽", "边路"],
     difficulty: "基础",
-    recommendedMode: "半场讲解",
+    recommendedMode: "进攻半场",
     steps: [
       step(
         0,
         "边锋在外线",
-        "边锋先贴边拿球，边后卫在身后提供保护。",
+        "目标球门在右侧，边锋先贴边拿球，边后卫在身后保护。",
         board(
           [
             home("p2", "2", 50, 56),
@@ -494,18 +496,18 @@ export const TACTIC_TEMPLATES = [
     id: "template_pivot_drop_support",
     name: "后腰回撤接应模板",
     category: "出球组织",
-    description: "后腰回撤到中卫之间或身前，帮助后场摆脱第一道逼抢。",
+    description: "全场向右推进，后腰回撤到中卫之间或身前，帮助后场摆脱第一道逼抢。",
     suitableFor: ["后场出球", "校园足球", "基础教练"],
-    fieldView: "half",
+    fieldView: FIELD_MODES.FULL_FIELD,
     format: "11v11/8v8",
     tags: ["后腰", "接应", "后场出球"],
     difficulty: "基础",
-    recommendedMode: "半场讲解",
+    recommendedMode: "全场出球",
     steps: [
       step(
         0,
         "后场控球",
-        "中卫控球时，后腰先观察身后和两侧空间。",
+        "全场向右推进，中卫控球时后腰先观察身后和两侧空间。",
         board(
           [
             home("p1", "1", 12, 32),
@@ -606,18 +608,18 @@ export const TACTIC_TEMPLATES = [
     id: "template_defensive_line_shift",
     name: "防线整体横移模板",
     category: "防守联动",
-    description: "防线根据球所在边路整体横移，保持距离和保护中路。",
+    description: "全场防守横移，防线根据球所在边路整体移动，保持距离和保护中路。",
     suitableFor: ["防守训练", "青训基础", "业余球队"],
-    fieldView: "half",
+    fieldView: FIELD_MODES.FULL_FIELD,
     format: "7v7/11v11",
     tags: ["防线", "横移", "保护"],
     difficulty: "基础",
-    recommendedMode: "半场讲解",
+    recommendedMode: "全场防守",
     steps: [
       step(
         0,
         "中路防守",
-        "后卫线先保持横向距离，中场在身前保护。",
+        "全场防守横移，先看后卫线距离和身前保护。",
         board(
           [
             home("p2", "2", 55, 52),
@@ -639,7 +641,7 @@ export const TACTIC_TEMPLATES = [
       step(
         1,
         "球到边路",
-        "球到右路时，防线一起向有球侧移动。",
+        "球到边路时，防线沿宽度方向一起横移，不是向球门冲。",
         board(
           [
             home("p2", "2", 62, 54),
@@ -720,18 +722,18 @@ export const TACTIC_TEMPLATES = [
     id: "template_high_press_basic",
     name: "高位逼抢基础模板",
     category: "防守联动",
-    description: "前场三人统一方向逼抢，后方队员前压保持距离。",
+    description: "目标球门在右侧，前场三人统一方向逼抢，后方队员前压保持距离。",
     suitableFor: ["高位逼抢入门", "校园足球", "业余球队"],
-    fieldView: "half",
+    fieldView: FIELD_MODES.ATTACKING_HALF,
     format: "7v7/11v11",
     tags: ["逼抢", "压迫", "协防"],
     difficulty: "基础",
-    recommendedMode: "半场讲解",
+    recommendedMode: "进攻半场",
     steps: [
       step(
         0,
         "对方后场控球",
-        "先确认第一逼抢点和身后保护位置。",
+        "目标球门在右侧，先确认第一逼抢点和身后保护位置。",
         board(
           [
             home("p9", "9", 70, 32),
@@ -831,18 +833,18 @@ export const TACTIC_TEMPLATES = [
     id: "template_counter_after_win",
     name: "抢断后快速反击模板",
     category: "攻防转换",
-    description: "抢断后第一脚向前，边路和中路同步前插形成反击。",
+    description: "目标球门在右侧，抢断后第一脚向前，边路和中路同步前插形成反击。",
     suitableFor: ["攻防转换", "青训比赛讲解", "业余球队"],
-    fieldView: "half",
+    fieldView: FIELD_MODES.ATTACKING_HALF,
     format: "7v7/11v11",
     tags: ["反击", "抢断", "向前"],
     difficulty: "基础",
-    recommendedMode: "半场讲解",
+    recommendedMode: "进攻半场",
     steps: [
       step(
         0,
         "中场抢断前",
-        "先看中场压迫位置和前方两个反击点。",
+        "目标球门在右侧，先看中场压迫和前方两个反击点。",
         board(
           [
             home("p6", "6", 54, 36),
@@ -952,7 +954,7 @@ export function createTemplateAppState(template) {
   return {
     steps: clonedTemplate.steps,
     activeStepId: clonedTemplate.steps[0]?.id ?? "step_0",
-    fieldView: clonedTemplate.field?.view ?? "half",
+    fieldView: normalizeFieldView(clonedTemplate.field?.view),
     tacticMeta: {
       id: `tactic_${Date.now()}`,
       title: `${clonedTemplate.name} 副本`,
@@ -995,7 +997,8 @@ function makeTemplate({
       id: "field_football_v1",
       type: "football",
       format,
-      view: fieldView,
+      view: normalizeFieldView(fieldView),
+      attackDirection: "right",
       orientation: "landscape",
       size: FIELD_SIZE,
     },
