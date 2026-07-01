@@ -757,16 +757,157 @@ function TemplateLibraryMode({ onCopyTemplate, onReturnToEdit, templates }) {
   const [activePreviewStepId, setActivePreviewStepId] = useState(
     templates[0]?.steps[0]?.id ?? "step_0",
   );
+  const [templatePlayback, setTemplatePlayback] = useState(IDLE_PLAYBACK);
+  const templatePlaybackRunIdRef = useRef(0);
   const selectedTemplate =
     templates.find((template) => template.id === selectedTemplateId) ?? templates[0];
   const activePreviewStep =
     selectedTemplate.steps.find((step) => step.id === activePreviewStepId) ??
     selectedTemplate.steps[0];
   const previewBoardState = createBoardStateFromStep(activePreviewStep);
+  const templatePlaybackFrame = useMemo(
+    () => resolvePlaybackFrame(selectedTemplate.steps, templatePlayback),
+    [selectedTemplate.steps, templatePlayback],
+  );
+  const isTemplatePlaybackVisible = templatePlayback.status !== "idle";
+  const displayedPreviewBoardState =
+    templatePlaybackFrame?.boardState ?? previewBoardState;
+  const displayedPreviewStep = templatePlaybackFrame?.displayStep ?? activePreviewStep;
+  const displayedPreviewStepIndex =
+    templatePlaybackFrame?.displayStepIndex ??
+    Math.max(
+      0,
+      selectedTemplate.steps.findIndex((step) => step.id === activePreviewStepId),
+    );
+  const canPlayTemplate = selectedTemplate.steps.length > 1;
+
+  useEffect(() => {
+    if (templatePlayback.status !== "playing") {
+      return undefined;
+    }
+
+    const runId = templatePlaybackRunIdRef.current;
+    const intervalId = window.setInterval(() => {
+      if (templatePlaybackRunIdRef.current !== runId) {
+        return;
+      }
+
+      setTemplatePlayback((currentPlayback) => {
+        if (currentPlayback.status !== "playing") {
+          return currentPlayback;
+        }
+
+        const lastSegmentIndex = Math.max(0, selectedTemplate.steps.length - 2);
+        const segmentCount = lastSegmentIndex + 1;
+        const elapsedMs = getNow() - currentPlayback.startedAt;
+        const totalDurationMs = segmentCount * PLAYBACK_STEP_DURATION_MS;
+
+        if (elapsedMs >= totalDurationMs) {
+          return {
+            status: "ended",
+            segmentIndex: lastSegmentIndex,
+            progress: 1,
+            startedAt: null,
+          };
+        }
+
+        const nextSegmentIndex = Math.min(
+          lastSegmentIndex,
+          Math.floor(elapsedMs / PLAYBACK_STEP_DURATION_MS),
+        );
+        const nextProgress =
+          (elapsedMs - nextSegmentIndex * PLAYBACK_STEP_DURATION_MS) /
+          PLAYBACK_STEP_DURATION_MS;
+
+        return {
+          ...currentPlayback,
+          status: "playing",
+          segmentIndex: nextSegmentIndex,
+          progress: nextProgress,
+        };
+      });
+    }, PLAYBACK_REFRESH_MS);
+
+    return () => {
+      window.clearInterval(intervalId);
+    };
+  }, [templatePlayback.status, selectedTemplate.steps.length]);
+
+  useEffect(() => {
+    if (templatePlayback.status === "ended" && selectedTemplate.steps.length > 0) {
+      setActivePreviewStepId(selectedTemplate.steps[selectedTemplate.steps.length - 1].id);
+    }
+  }, [templatePlayback.status, selectedTemplate.steps]);
 
   function selectTemplate(template) {
+    resetTemplatePlayback();
     setSelectedTemplateId(template.id);
     setActivePreviewStepId(template.steps[0]?.id ?? "step_0");
+  }
+
+  function selectPreviewStep(stepId) {
+    resetTemplatePlayback();
+    setActivePreviewStepId(stepId);
+  }
+
+  function resetTemplatePlayback() {
+    templatePlaybackRunIdRef.current += 1;
+    setTemplatePlayback(IDLE_PLAYBACK);
+  }
+
+  function playTemplate() {
+    if (!canPlayTemplate) {
+      return;
+    }
+
+    templatePlaybackRunIdRef.current += 1;
+    const startedAt = getNow();
+    setTemplatePlayback((currentPlayback) => {
+      if (currentPlayback.status === "paused") {
+        const elapsedMs =
+          (currentPlayback.segmentIndex + currentPlayback.progress) *
+          PLAYBACK_STEP_DURATION_MS;
+
+        return {
+          ...currentPlayback,
+          status: "playing",
+          startedAt: startedAt - elapsedMs,
+        };
+      }
+
+      return {
+        status: "playing",
+        segmentIndex: 0,
+        progress: 0,
+        startedAt,
+      };
+    });
+  }
+
+  function pauseTemplate() {
+    templatePlaybackRunIdRef.current += 1;
+    setTemplatePlayback((currentPlayback) =>
+      currentPlayback.status === "playing"
+        ? {
+            ...currentPlayback,
+            status: "paused",
+          }
+        : currentPlayback,
+    );
+  }
+
+  function replayTemplate() {
+    if (!canPlayTemplate) {
+      return;
+    }
+
+    templatePlaybackRunIdRef.current += 1;
+    setTemplatePlayback({
+      status: "playing",
+      segmentIndex: 0,
+      progress: 0,
+      startedAt: getNow(),
+    });
   }
 
   return (
@@ -830,7 +971,7 @@ function TemplateLibraryMode({ onCopyTemplate, onReturnToEdit, templates }) {
             <section className="template-preview-board" aria-label="模板预览球场">
               <TacticBoard
                 activeTool="move"
-                boardState={previewBoardState}
+                boardState={displayedPreviewBoardState}
                 fieldView={selectedTemplate.field.view}
                 readOnly
                 selectedPathId={null}
@@ -845,23 +986,52 @@ function TemplateLibraryMode({ onCopyTemplate, onReturnToEdit, templates }) {
                   <button
                     key={step.id}
                     className={
-                      step.id === activePreviewStep.id
+                      step.id === displayedPreviewStep.id
                         ? "template-step-button active"
                         : "template-step-button"
                     }
                     type="button"
-                    onClick={() => setActivePreviewStepId(step.id)}
+                    onClick={() => selectPreviewStep(step.id)}
+                    disabled={templatePlayback.status === "playing"}
                   >
                     Step {index}
                   </button>
                 ))}
               </div>
-              <p>{activePreviewStep.note}</p>
+              <p>{displayedPreviewStep.note}</p>
+              <span className="template-playback-status">
+                {getPlaybackStatusText(templatePlayback.status, canPlayTemplate)} · Step{" "}
+                {displayedPreviewStepIndex} / {selectedTemplate.steps.length - 1}
+              </span>
             </section>
 
             <div className="template-detail-actions">
-              <button className="control-button" type="button" disabled>
-                播放模板
+              <button
+                className="control-button"
+                type="button"
+                data-testid="play-template"
+                onClick={playTemplate}
+                disabled={!canPlayTemplate || templatePlayback.status === "playing"}
+              >
+                {templatePlayback.status === "paused" ? "继续播放" : "播放模板"}
+              </button>
+              <button
+                className="control-button"
+                type="button"
+                data-testid="pause-template"
+                onClick={pauseTemplate}
+                disabled={templatePlayback.status !== "playing"}
+              >
+                暂停
+              </button>
+              <button
+                className="control-button"
+                type="button"
+                data-testid="replay-template"
+                onClick={replayTemplate}
+                disabled={!canPlayTemplate}
+              >
+                重播
               </button>
               <button
                 className="control-button primary"

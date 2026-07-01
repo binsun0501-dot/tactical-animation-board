@@ -725,12 +725,23 @@ h1 {
   color: #ffffff;
 }
 
+.template-step-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.58;
+}
+
 .template-step-panel p {
   margin: 0;
   color: #233b2f;
   font-size: 16px;
   font-weight: 850;
   line-height: 1.45;
+}
+
+.template-playback-status {
+  color: #17634a;
+  font-size: 12px;
+  font-weight: 900;
 }
 
 .template-detail-actions {
