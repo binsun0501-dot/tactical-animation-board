@@ -19,13 +19,28 @@
   width: min(1440px, 100%);
   height: calc(100vh - 20px);
   min-height: 0;
+  position: relative;
+  display: block;
   gap: 8px;
 }
 
 .board-top-bar {
-  min-height: 42px;
-  padding: 6px 12px;
+  position: absolute;
+  z-index: 25;
+  top: 10px;
+  right: 12px;
+  width: auto;
+  max-width: min(330px, calc(100% - 190px));
+  min-height: 0;
+  padding: 6px 10px;
+  border-radius: 999px;
   background: rgba(250, 255, 252, 0.88);
+  gap: 0;
+  box-shadow: 0 8px 22px rgba(21, 56, 37, 0.12);
+}
+
+.board-top-bar > div:first-child {
+  display: none;
 }
 
 .board-top-bar .stage-label {
@@ -38,31 +53,26 @@
 
 .top-step-summary {
   min-width: 0;
-  max-width: min(650px, 58vw);
+  max-width: 100%;
   color: #2d493c;
   display: grid;
   justify-items: end;
-  gap: 3px;
+  gap: 0;
   text-align: right;
 }
 
 .top-step-summary strong {
   color: #176df2;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 950;
 }
 
 .top-step-summary span {
-  overflow: hidden;
-  max-width: 100%;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-size: 13px;
-  font-weight: 800;
+  display: none;
 }
 
 .board-workspace {
-  height: calc(100vh - 76px);
+  height: 100%;
   min-height: 0;
   display: block;
 }
@@ -189,7 +199,7 @@
   position: absolute;
   z-index: 24;
   right: 12px;
-  top: 12px;
+  top: 54px;
   display: flex;
   gap: 7px;
 }
@@ -251,11 +261,24 @@
   z-index: 18;
   right: 12px;
   bottom: 12px;
-  left: 12px;
-  min-height: 58px;
-  padding: 9px 12px;
+  left: auto;
+  width: min(330px, calc(100% - 24px));
+  min-height: 0;
+  padding: 8px 9px;
   background: rgba(250, 255, 252, 0.92);
   box-shadow: 0 14px 36px rgba(19, 51, 34, 0.16);
+  gap: 8px;
+}
+
+.board-first-area .playback-summary span,
+.board-first-area .playback-summary p {
+  display: none;
+}
+
+.board-first-area .playback-summary strong {
+  margin-top: 0;
+  font-size: 13px;
+  white-space: nowrap;
 }
 
 .board-first-area .playback-summary p {
@@ -263,6 +286,17 @@
   max-width: 56vw;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.board-first-area .playback-actions {
+  flex-wrap: nowrap;
+  gap: 5px;
+}
+
+.board-first-area .control-button {
+  min-height: 32px;
+  padding: 0 8px;
+  font-size: 12px;
 }
 
 .equipment-marker {
@@ -297,18 +331,19 @@
   }
 
   .board-top-bar {
-    align-items: flex-start;
-    flex-direction: column;
+    top: 8px;
+    right: 8px;
+    max-width: min(220px, calc(100% - 136px));
   }
 
   .top-step-summary {
-    justify-items: start;
+    justify-items: end;
     max-width: 100%;
-    text-align: left;
+    text-align: right;
   }
 
   .board-workspace {
-    height: calc(100vh - 132px);
+    height: 100%;
   }
 
   .floating-board-controls {
@@ -339,7 +374,8 @@
   .board-first-area > .playback-strip {
     right: 8px;
     bottom: 8px;
-    left: 8px;
+    left: auto;
+    width: min(310px, calc(100% - 16px));
   }
 
   .board-first-area .playback-summary p {
@@ -1700,10 +1736,52 @@ h1 {
 .editor-app .board-editor-shell {
   height: calc(100vh - 20px);
   min-height: 0;
+  position: relative;
+  display: block;
+}
+
+.editor-app .board-top-bar {
+  position: absolute;
+  z-index: 25;
+  top: 10px;
+  right: 12px;
+  width: auto;
+  max-width: min(330px, calc(100% - 190px));
+  min-height: 0;
+  padding: 5px 9px;
+  border-radius: 999px;
+  background: rgba(250, 255, 252, 0.88);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  box-shadow: 0 8px 22px rgba(21, 56, 37, 0.12);
+}
+
+.editor-app .board-top-bar > div:first-child {
+  display: none;
+}
+
+.editor-app .top-step-summary {
+  max-width: 100%;
+  justify-items: end;
+  gap: 0;
+  text-align: right;
+}
+
+.editor-app .top-step-summary strong {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.editor-app .top-step-summary span {
+  display: none;
 }
 
 .editor-app .board-workspace {
-  height: calc(100vh - 76px);
+  height: 100%;
   min-height: 0;
   display: block;
 }
@@ -1730,13 +1808,14 @@ h1 {
   position: absolute;
   right: 12px;
   bottom: 12px;
-  left: 12px;
+  left: auto;
+  width: min(330px, calc(100% - 24px));
   z-index: 18;
 }
 
 @media (min-width: 821px) and (max-height: 820px) {
   .editor-app .board-workspace {
-    height: calc(100vh - 76px);
+    height: 100%;
     display: block;
   }
 
@@ -1747,8 +1826,14 @@ h1 {
 }
 
 @media (max-width: 820px) {
+  .editor-app .board-top-bar {
+    top: 8px;
+    right: 8px;
+    max-width: min(220px, calc(100% - 136px));
+  }
+
   .editor-app .board-workspace {
-    height: calc(100vh - 132px);
+    height: 100%;
   }
 
   .editor-app .board-stage .board-frame {
