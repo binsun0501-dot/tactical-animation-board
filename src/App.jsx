@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { SavePanel } from "./components/SavePanel.jsx";
 import { TacticBoard } from "./components/TacticBoard.jsx";
+import { APP_BUILD_DATE, APP_PHASE, APP_VERSION } from "./appVersion.js";
 import {
   cloneBoardState,
   createInitialBoardState,
@@ -1283,7 +1284,7 @@ function HomeMode({ onOpenRecent, onOpenTemplates, onStartBoard, savedSummary })
     <main className="app-shell home-app">
       <section className="home-shell" aria-label="战术动画板首页">
         <header className="home-header">
-          <p className="stage-label">公网实验版 v0.1.0-alpha</p>
+          <p className="stage-label">公网实验版 {APP_VERSION}</p>
           <h1>先选一个入口</h1>
         </header>
 
@@ -1342,6 +1343,21 @@ function HomeMode({ onOpenRecent, onOpenTemplates, onStartBoard, savedSummary })
               <p>
                 用 iPad Safari 打开公网链接，点分享按钮，选择“添加到主屏幕”。
                 浏览器顶部栏会占空间，主屏幕打开后显示面积更接近正式使用。
+              </p>
+            </section>
+            <section>
+              <h2>基础离线</h2>
+              <p>
+                第一次需要联网打开一次并添加到主屏幕；缓存成功后，无网络时可进入首页和现场白板。
+                保存仍只在本机，不会上传或同步。
+              </p>
+            </section>
+            <section data-testid="app-version-info">
+              <h2>版本</h2>
+              <p>
+                {APP_VERSION} / {APP_PHASE}
+                <br />
+                build: {APP_BUILD_DATE}
               </p>
             </section>
             <section>

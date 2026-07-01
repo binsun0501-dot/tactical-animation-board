@@ -1,7 +1,7 @@
 {
   "name": "战术动画板",
   "short_name": "战术板",
-  "description": "足球现场白板 v0.1.0-alpha 公网 PWA 实验版。",
+  "description": "足球现场白板 v0.1.1-offline-alpha 公网 PWA 基础离线实验版。",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
