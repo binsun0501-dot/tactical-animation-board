@@ -6,7 +6,7 @@ import {
   createInitialBoardState,
   createInitialSteps,
 } from "./data/initialBoard.js";
-import { TACTIC_TEMPLATES } from "./data/templates.js";
+import { TACTIC_TEMPLATES, createTemplateAppState } from "./data/templates.js";
 import {
   PLAYBACK_STEP_DURATION_MS,
   createBoardStateFromStep,
@@ -92,7 +92,7 @@ export default function App() {
       0,
       steps.findIndex((step) => step.id === activeStepId),
     );
-  const canAddStep = steps.length < 3;
+  const canAddStep = steps.length < 5;
   const canPlay = steps.length > 1;
   const editingDisabled = isPlaybackVisible;
   const isPresentationMode = appMode === "presentation";
@@ -481,6 +481,13 @@ export default function App() {
     setAppMode("templates");
   }
 
+  function copyTemplateToTactic(template) {
+    const appState = createTemplateAppState(template);
+    applyTacticState(appState, `已复制「${template.name}」，可继续修改并保存`);
+    setAppMode("edit");
+    setSavedSummary(getSavedTacticSummary());
+  }
+
   function goToStepByIndex(nextStepIndex) {
     const nextStep = steps[nextStepIndex];
     if (!nextStep) {
@@ -538,7 +545,7 @@ export default function App() {
   if (isTemplateLibraryMode) {
     return (
       <TemplateLibraryMode
-        onCopyTemplate={null}
+        onCopyTemplate={copyTemplateToTactic}
         onReturnToEdit={returnToEditMode}
         templates={TACTIC_TEMPLATES}
       />

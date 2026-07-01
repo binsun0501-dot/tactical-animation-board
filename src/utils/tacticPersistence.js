@@ -12,6 +12,9 @@ export function createNewTacticMeta() {
     title: DEFAULT_TITLE,
     createdAt: now,
     updatedAt: now,
+    source: "editor",
+    sourceTemplateId: null,
+    sourceTemplateName: null,
   };
 }
 
@@ -33,7 +36,9 @@ export function createTacticDocument({ steps, activeStepId, fieldView, tacticMet
       title: meta.title,
       sport: "football",
       mode: "v1",
-      source: "editor",
+      source: meta.source || "editor",
+      sourceTemplateId: meta.sourceTemplateId ?? null,
+      sourceTemplateName: meta.sourceTemplateName ?? null,
       createdAt: meta.createdAt,
       updatedAt: meta.updatedAt,
       field: {
@@ -123,6 +128,9 @@ export function documentToAppState(document) {
       title: normalizeTitle(tactic.title),
       createdAt: tactic.createdAt || new Date().toISOString(),
       updatedAt: tactic.updatedAt || new Date().toISOString(),
+      source: tactic.source || "editor",
+      sourceTemplateId: tactic.sourceTemplateId ?? null,
+      sourceTemplateName: tactic.sourceTemplateName ?? null,
     },
   };
 }
