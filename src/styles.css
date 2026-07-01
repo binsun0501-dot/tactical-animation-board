@@ -1059,17 +1059,22 @@ h1 {
   }
 
   .workspace {
-    grid-template-columns: 1fr;
+    height: calc(100vh - 98px);
+    grid-template-columns: 300px minmax(0, 1fr);
+    align-items: stretch;
     gap: 10px;
   }
 
   .tool-rail {
-    min-height: auto;
+    min-height: 0;
+    max-height: 100%;
     display: grid;
-    grid-template-columns: repeat(8, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-content: start;
     align-items: stretch;
     gap: 6px;
     padding: 8px;
+    overflow: auto;
   }
 
   .tool-button {
@@ -1080,12 +1085,14 @@ h1 {
   }
 
   .save-panel {
-    grid-column: span 4;
+    grid-column: 1 / -1;
+    order: 3;
     padding: 8px;
   }
 
   .step-panel {
-    grid-column: span 4;
+    grid-column: 1 / -1;
+    order: 2;
     margin-top: 0;
     padding-top: 0;
     border-top: 0;
@@ -1121,7 +1128,7 @@ h1 {
 
   .board-frame {
     min-height: 0;
-    height: calc(100vh - 310px);
+    height: calc(100vh - 190px);
   }
 
   .template-workspace {

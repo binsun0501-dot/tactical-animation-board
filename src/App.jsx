@@ -348,7 +348,7 @@ export default function App() {
     setSteps((currentSteps) => {
       const previousStep = currentSteps[currentSteps.length - 1];
       const order = currentSteps.length;
-      const nextStepId = `step_${order}`;
+      const nextStepId = getNextStepId(currentSteps);
       const nextStep = {
         id: nextStepId,
         order,
@@ -1592,6 +1592,17 @@ function normalizeStepOrder(steps) {
     title: normalizeStepTitle(step.title, index),
     baseStateFromStepId: index === 0 ? null : steps[index - 1].id,
   }));
+}
+
+function getNextStepId(steps) {
+  const usedStepIds = new Set(steps.map((step) => step.id));
+  let index = steps.length;
+
+  while (usedStepIds.has(`step_${index}`)) {
+    index += 1;
+  }
+
+  return `step_${index}`;
 }
 
 function normalizeStepTitle(title, index) {
