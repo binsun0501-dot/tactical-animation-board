@@ -436,13 +436,13 @@ export default function App() {
     );
   }
 
-  function selectStep(stepId) {
+  function selectStep(stepId, { keepPanelOpen = false } = {}) {
     resetPlayback();
     setActiveStepId(stepId);
     setSelectedPathId(null);
     setSelectedPiece(null);
     setBoardMenu(null);
-    setOpenPanel(null);
+    setOpenPanel(keepPanelOpen ? "steps" : null);
     setActiveTool("move");
   }
 
@@ -995,7 +995,7 @@ export default function App() {
                           .filter(Boolean)
                           .join(" ")}
                         type="button"
-                        onClick={() => selectStep(step.id)}
+                        onClick={() => selectStep(step.id, { keepPanelOpen: true })}
                       >
                         <strong>{step.title}</strong>
                         <span>{step.baseStateFromStepId ? "继承上一状态" : "初始站位"}</span>
